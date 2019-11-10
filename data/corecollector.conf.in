@@ -1,0 +1,8 @@
+# What compression to use for coredumps.
+# Available choices:
+compression = "none"
+# The maximum size of coredumps.
+# Unset or set to 0 to set no size limit.
+maxSize = 0
+# The path to save coredumps to.
+targetPath = "@COREDUMP_PATH@"
