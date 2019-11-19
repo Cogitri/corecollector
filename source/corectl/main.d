@@ -1,32 +1,40 @@
 module corecollector.corecollector;
 
+import corecollector.configuration;
+import corecollector.coredump;
 import corectl.options;
 
+import hunt.Exceptions : ConfigurationException;
 import hunt.util.Argument;
-
 
 import std.algorithm;
 import std.algorithm.mutation : copy;
 import std.array;
 import std.file;
 import std.path;
-import std.stdio : write, writef, writeln, stderr, File;
+import std.stdio;
 
-private class Corecollector {
-    string targetPath;
-    string[] availableDumps;
+private class CoreCtl {
+    CoredumpDir coredumpDir;
 
-    this(string targetPath) {
-        this.targetPath = targetPath;
-        this.availableDumps = dirEntries(this.targetPath, SpanMode.shallow)
-            .filter!(a => a.isFile)
-            .map!(a => baseName(a.name))
-            .array;
+    this(CoredumpDir coreDir) {
+        this.coredumpDir = coreDir;
     }
 
-    int list_coredumps() {
-        writeln("stub");
-        return 0;
+    void listCoredumps() {
+        writeln("Executable\tSignal\tUID\tGID\tPID\tTimestamp");
+        foreach(x; this.coredumpDir.coredumps)
+        {
+            writef(
+                "%s\t%i\t%i\t%i\t%i\t%s\t\n",
+                x.exe,
+                x.sig,
+                x.uid,
+                x.gid,
+                x.pid,
+                x.timestamp,
+            );
+        }
     }
 }
 
@@ -55,9 +63,22 @@ int main(string[] args)
         return 0;
     }
 
+    Configuration conf;
+
+    try {
+        conf = new Configuration(configPath);
+    } catch (ConfigurationException e) {
+        stderr.writef("Couldn't read configuration at path %s due to error %s\n", configPath, e);
+        return 1;
+    }
+
+    auto coreDir = new CoredumpDir(conf.targetPath);
+
+    auto coreCtl = new CoreCtl(coreDir);
+
     switch (options.mode) {
         case "list":
-            writeln("stub");
+            coreCtl.listCoredumps();
             break;
         default:
             stderr.writef("Unknown operation %s\n", options.mode);

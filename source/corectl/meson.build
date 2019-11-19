@@ -1,5 +1,6 @@
 main_src = [
     'main.d',
+    'options.d',
 ]
 
 executable(

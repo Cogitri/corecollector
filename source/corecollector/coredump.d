@@ -54,7 +54,7 @@ class Coredump {
 }
 
 class CoredumpDir {
-    private Coredump[] coredumps;
+    Coredump[] coredumps;
     private string targetPath;
 
     this() {
