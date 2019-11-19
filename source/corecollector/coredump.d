@@ -69,7 +69,8 @@ class CoredumpDir {
 
     this(string targetPath) {
         this.targetPath = targetPath;
-        auto coredump_text = readText(buildPath(targetPath, configName));
+        auto configPath = buildPath(targetPath, configName);
+        auto coredump_text = readText(configPath);
         auto coredump_json = parseJSON(coredump_text);
         this(coredump_json);
     }
@@ -77,7 +78,8 @@ class CoredumpDir {
     void addCoredump(Coredump coredump) {
         this.coredumps ~= coredump;
 
-        auto target = File(this.targetPath, "w");
+        auto coredumpPath = buildPath(this.targetPath, coredump.generateCoredumpName());
+        auto target = File(coredumpPath, "w");
         scope (exit)
             target.close();
 
