@@ -70,6 +70,8 @@ class CoredumpDir {
     this(string targetPath) {
         this.targetPath = targetPath;
         auto configPath = buildPath(targetPath, configName);
+        this.ensureDir(configPath);
+
         auto coredump_text = readText(configPath);
         auto coredump_json = parseJSON(coredump_text);
         this(coredump_json);
@@ -89,7 +91,23 @@ class CoredumpDir {
         }
     }
 
+    private void ensureDir(string configPath) {
+        if (!configPath.exists) {
+            if(!this.targetPath.exists) {
+                this.targetPath.mkdir;
+            }
+
+            immutable auto defaultConfig = `{"coredumps": [], "targetPath": "` ~ this.targetPath ~ `"`;
+            this.writeConfig(defaultConfig);
+        }
+    }
+
     void writeConfig() {
+        auto coredump_json = hunt.serialization.JsonSerializer.toJson(this).toString();
+        writeConfig(coredump_json);
+    }
+
+    private void writeConfig(string JSONConfig) {
         auto coredump_json = hunt.serialization.JsonSerializer.toJson(this).toString();
         auto configFile = File(buildPath(targetPath, configName), "w");
         configFile.write(coredump_json);
