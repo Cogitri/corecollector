@@ -2,11 +2,12 @@ module corecollector.coredump;
 
 static import hunt.serialization.JsonSerializer;
 
-//import std.cov: to;
+import std.conv;
 import std.file;
 import std.json;
 import std.path;
 import std.stdio;
+import std.uuid;
 
 immutable configName = "coredumps.json";
 
@@ -17,6 +18,7 @@ class Coredump {
     ulong sig;
     string exe;
     string timestamp;
+    string filename;
 
     this(ulong uid, ulong gid, ulong pid, ulong sig, string exe, string timestamp) {
         this.uid = uid;
@@ -28,7 +30,7 @@ class Coredump {
     }
 
     this(JSONValue json) {
-        this(
+        auto core = this(
             json["uid"].uinteger,
             json["gid"].uinteger,
             json["pid"].uinteger,
@@ -36,6 +38,18 @@ class Coredump {
             json["exe"].str,
             json["timestamp"].str
         );
+
+        core.filename = generateCoredumpName();
+    }
+
+    final string generateCoredumpName() {
+        auto filename = this.exe ~ "-"
+            ~ this.sig.to!string ~ "-"
+            ~ this.pid.to!string ~ "-"
+            ~ this.uid.to!string ~ "-"
+            ~ this.gid.to!string ~ "-"
+            ~ this.timestamp;
+        return filename ~ sha1UUID(filename).to!string;
     }
 }
 
@@ -60,12 +74,6 @@ class CoredumpDir {
         this(coredump_json);
     }
 
-    @safe ~this() {
-        auto coredump_json = hunt.serialization.JsonSerializer.toJson(this).toString();
-        auto configFile = File(buildPath(targetPath, configName), "w");
-        configFile.write(coredump_json);
-    }
-
     void addCoredump(Coredump coredump) {
         this.coredumps ~= coredump;
 
@@ -77,6 +85,12 @@ class CoredumpDir {
         {
             target.rawWrite(buffer);
         }
+    }
+
+    void writeConfig() {
+        auto coredump_json = hunt.serialization.JsonSerializer.toJson(this).toString();
+        auto configFile = File(buildPath(targetPath, configName), "w");
+        configFile.write(coredump_json);
     }
 }
 
