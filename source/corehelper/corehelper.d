@@ -22,6 +22,7 @@ class CoreHelper {
         auto coredumpDir = new CoredumpDir(this.config.targetPath);
         try {
             coredumpDir.addCoredump(this.coredump);
+            coredumpDir.writeConfig();
             return 0;
         } catch (ErrnoException e) {
             stderr.writef("Couldn't save coredump due to error %s\n", e);
