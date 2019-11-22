@@ -31,10 +31,10 @@ class Coredump {
 
     this(JSONValue json) {
         auto core = this(
-            json["uid"].uinteger,
-            json["gid"].uinteger,
-            json["pid"].uinteger,
-            json["sig"].uinteger,
+            json["uid"].integer,
+            json["gid"].integer,
+            json["pid"].integer,
+            json["sig"].integer,
             json["exe"].str,
             json["timestamp"].str
         );
