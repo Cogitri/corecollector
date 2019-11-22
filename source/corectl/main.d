@@ -26,7 +26,7 @@ private class CoreCtl {
         foreach(x; this.coredumpDir.coredumps)
         {
             writef(
-                "%s\t%i\t%i\t%i\t%i\t%s\t\n",
+                "%s\t\t%d\t%d\t%d\t%d\t%s\t\n",
                 x.exe,
                 x.sig,
                 x.uid,
