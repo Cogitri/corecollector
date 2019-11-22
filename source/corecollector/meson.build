@@ -17,11 +17,13 @@ core_lib = library(
     version: meson.project_version(),
     soversion: project_soversion,
     d_module_versions: d_mod_version,
+    link_args: ['-shared', '-link-defaultlib-shared'],
 )
 
 core_lib_dep = declare_dependency(
     link_with: core_lib,
     include_directories: src_inc,
+    link_args: '-link-defaultlib-shared',
 )
 
 pkgc.generate(
@@ -36,9 +38,10 @@ core_lib_test_exe = executable(
     [lib_src, 'tests/main.d'],
     dependencies: hunt_dep,
     d_unittest: true,
+    link_args: '-link-defaultlib-shared',
 )
 
 test(
     'corelib-test',
-    core_lib_test_exe,
+     core_lib_test_exe,
 )
