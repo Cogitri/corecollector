@@ -23,7 +23,7 @@ class Configuration
     this() { }
 
     this(string configPath) {
-        auto path = relativePath(configPath, std.file.getcwd);
+        auto path = relativePath(configPath, std.file.thisExePath.dirName);
         ConfigBuilder confManager = new ConfigBuilder(path);
         auto conf = confManager.build!Configuration();
         compression = move(conf.compression);
