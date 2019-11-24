@@ -10,7 +10,7 @@ lib_src = [
 ]
 
 core_lib = library(
-    'libcorecollector',
+    'corecollector',
     lib_src,
     dependencies: hunt_dep,
     install: true,
