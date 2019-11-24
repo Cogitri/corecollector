@@ -39,22 +39,22 @@ struct Options
     /// The pid of the exe
     @Option("pid", "p")
     @Help("The PID of the executable whose coredump you're sending me.")
-    ulong pid;
+    long pid;
 
     /// The uid of the exe
     @Option("uid", "u")
     @Help("The UID of the user who executed the executable whose coredump you're sending me.")
-    ulong uid;
+    long uid;
 
     /// The gid of the exe
     @Option("gid", "g")
     @Help("The GID of the user the executable whose coredump you're sending me.")
-    ulong gid;
+    long gid;
 
     /// The signal of the exe
     @Option("signal", "s")
     @Help("The signal the executable whose coredump you're sending me threw when crashing.")
-    ulong signal;
+    long signal;
 
     /// The timestamp of the exe crashing
     @Option("timestamp", "t")
