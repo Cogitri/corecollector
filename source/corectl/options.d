@@ -21,12 +21,15 @@ module corectl.options;
 
 import hunt.util.Argument;
 
+/// CLI `Options` of `corectl`
 struct Options
 {
+    /// Whether the user requests help (the cmd overview to the printed).
     @Option("help", "h")
     @Help("Prints this help.")
     OptionFlag help;
 
+    /// What mode `corectl` should run in.
     @Argument("mode")
     @Help("What mode to start in [list|info]")
     string mode;
