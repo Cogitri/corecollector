@@ -24,6 +24,7 @@ static import hunt.serialization.JsonSerializer;
 import std.conv;
 import std.file;
 import std.json;
+import std.outbuffer;
 import std.path;
 import std.stdio;
 import std.uuid;
@@ -146,7 +147,9 @@ class CoredumpDir {
 
     private void writeConfig(string JSONConfig) {
         auto configFile = File(buildPath(targetPath, configName), "w");
-        configFile.write(JSONConfig);
+        auto buf = new OutBuffer();
+        buf.write(JSONConfig);
+        configFile.write(buf.toString());
     }
 }
 
