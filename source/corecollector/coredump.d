@@ -134,7 +134,7 @@ class CoredumpDir {
                 this.targetPath.mkdir;
             }
 
-            immutable auto defaultConfig = `{"coredumps": [], "targetPath": "` ~ this.targetPath ~ `"`;
+            immutable auto defaultConfig = `{"coredumps": [], "targetPath": "` ~ this.targetPath ~ `"}\n`;
             this.writeConfig(defaultConfig);
         }
     }
