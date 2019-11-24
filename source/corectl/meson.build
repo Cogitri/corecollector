@@ -1,6 +1,7 @@
 main_src = [
     'main.d',
     'options.d',
+    'corectl.d',
 ]
 
 executable(

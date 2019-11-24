@@ -21,6 +21,7 @@ module corecollector.corecollector;
 
 import corecollector.configuration;
 import corecollector.coredump;
+import corectl.corectl;
 import corectl.options;
 
 import hunt.Exceptions : ConfigurationException;
@@ -32,30 +33,6 @@ import std.array;
 import std.file;
 import std.path;
 import std.stdio;
-
-private class CoreCtl {
-    CoredumpDir coredumpDir;
-
-    this(CoredumpDir coreDir) {
-        this.coredumpDir = coreDir;
-    }
-
-    void listCoredumps() {
-        writeln("Executable\tSignal\tUID\tGID\tPID\tTimestamp");
-        foreach(x; this.coredumpDir.coredumps)
-        {
-            writef(
-                "%s\t\t%d\t%d\t%d\t%d\t%s\t\n",
-                x.exe,
-                x.sig,
-                x.uid,
-                x.gid,
-                x.pid,
-                x.timestamp,
-            );
-        }
-    }
-}
 
 private immutable usage = usageString!Options("corecollector");
 private immutable help = helpString!Options;
