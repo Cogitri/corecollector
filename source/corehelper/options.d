@@ -23,6 +23,8 @@ import corecollector.coredump;
 
 import hunt.util.Argument;
 
+import std.array;
+
 /// CLI arguments passed to this binary, usually by the kernel
 struct Options
 {
@@ -35,6 +37,11 @@ struct Options
     @Option("exe-name", "e")
     @Help("The name of the executable whose curedump you're sending me.")
     string exe;
+
+    /// The path of the exe
+    @Option("exe-path", "E")
+    @Help("The path of the executable whose coredump you're sending me,")
+    string exePath;
 
     /// The pid of the exe
     @Option("pid", "p")
@@ -63,6 +70,8 @@ struct Options
 
     /// Convert a `Options` to a `Coredump`
     Coredump toCoredump() {
-        return new Coredump(this.uid, this.gid, this.pid, this.signal, this.timestamp, this.exe);
+        // The kernel sends `!` instead of `/`: http://man7.org/linux/man-pages/man5/core.5.html
+        auto slashPath = this.exePath.replace("!", "/");
+        return new Coredump(this.uid, this.gid, this.pid, this.signal, this.timestamp, this.exe, slashPath);
     }
 }

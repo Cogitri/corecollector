@@ -25,7 +25,7 @@ class CoreCtl {
 
         string expectedVal = "|"
             ~ buildPath("@LIBEXECDIR@", "corehelper")
-            ~ " -e=%e -p=%P -s=%s -t=%t";
+            ~ " -e=%e -E=%E -p=%P -s=%s -t=%t -u=%u -g=%g\n";
 
         enforce(
             sysctlVal == expectedVal,
@@ -41,12 +41,13 @@ class CoreCtl {
 
     /// Write all available coredumps to the stdout
     void listCoredumps() {
-        writeln("Executable\tSignal\tUID\tGID\tPID\tTimestamp");
+        writeln("Executable\tPath\t\tSignal\tUID\tGID\tPID\tTimestamp");
         foreach(x; this.coredumpDir.coredumps)
         {
             writef(
-                "%s\t\t%d\t%d\t%d\t%d\t%d\t\n",
+                "%s\t\t%s\t%d\t%d\t%d\t%d\t%d\t\n",
                 x.exe,
+                x.exePath,
                 x.sig,
                 x.uid,
                 x.gid,
