@@ -59,10 +59,10 @@ struct Options
     /// The timestamp of the exe crashing
     @Option("timestamp", "t")
     @Help("The time the executable whose coredump you're sending me crashed.")
-    string timestamp;
+    long timestamp;
 
     /// Convert a `Options` to a `Coredump`
     Coredump toCoredump() {
-        return new Coredump(this.uid, this.gid, this.pid, this.signal, this.exe, this.timestamp);
+        return new Coredump(this.uid, this.gid, this.pid, this.signal, this.timestamp, this.exe);
     }
 }
