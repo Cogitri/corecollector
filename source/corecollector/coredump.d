@@ -31,13 +31,13 @@ import std.uuid;
 /// A class describing a single coredump
 class Coredump {
     /// The PID of the program which crashed
-    ulong pid;
+    long pid;
     /// The UID of the user running the program which crashed
-    ulong uid;
+    long uid;
     /// The GID of the user running the program which crashed
-    ulong gid;
+    long gid;
     /// The signal which the program threw when crashing
-    ulong sig;
+    long sig;
     /// The name of the executable that crashed
     string exe;
     /// The UNIX timestamp at which the program crashed
@@ -46,7 +46,7 @@ class Coredump {
     private string filename;
 
     /// ctor to construct a `Coredump`
-    this(ulong uid, ulong gid, ulong pid, ulong sig, string exe, string timestamp) {
+    this(long uid, long gid, long pid, long sig, string exe, string timestamp) {
         this.uid = uid;
         this.pid = pid;
         this.gid = gid;
@@ -151,11 +151,15 @@ class CoredumpDir {
 }
 
 unittest {
-    auto core = new Coredump(1, 1, 1, 1, "test", "1970");
+    import std.format : format;
 
-    string validString = `{"exe":"test","gid":1,"pid":1,"sig":1,"timestamp":"1970","uid":1}`;
+    auto core = new Coredump(1000, 1000, 14_948, 6, "Xwayland", "1574450085");
+
+    auto validString =
+        `{"exe":"Xwayland","filename":[],"gid":1000,"pid":14948,"sig":6,"timestamp":"1574450085","uid":1000}`;
+    auto validJSON = parseJSON(validString);
     auto generatedJSON = hunt.serialization.JsonSerializer.toJson(core);
-    assert(generatedJSON == parseJSON(validString));
+    assert(generatedJSON == validJSON, format("Expected %s, got %s", validJSON, generatedJSON));
 
     auto parsedCore = new Coredump(generatedJSON);
     assert(parsedCore.exe == core.exe);
@@ -167,18 +171,26 @@ unittest {
 }
 
 unittest {
+    import std.format : format;
+
     auto core1 = new Coredump(1, 1, 1, 1, "test", "1970");
     auto core2 = new Coredump(1, 1, 1, 1, "test", "1971");
     auto coredumpDir = new CoredumpDir();
     coredumpDir.coredumps ~= core1;
     coredumpDir.coredumps ~= core2;
 
-    auto validString = `{"coredumps":[{"exe":"test","gid":1,"pid":1,"sig":1,"timestamp":"1970","uid":1},{"exe":"test","gid":1,"pid":1,"sig":1,"timestamp":"1971","uid":1}],"targetPath":[]}`;
+    auto validString = `{"configName":"coredumps.json","coredumps":`
+        ~ `[{"exe":"test","filename":[],"gid":1,"pid":1,"sig":1, "timestamp":"1970","uid":1},`
+        ~ `{"exe":"test","filename":[],"gid":1,"pid":1,"sig":1,"timestamp":"1971","uid":1}],"targetPath":[]}`;
+    auto validJSON = parseJSON(validString);
     auto generatedJSON = hunt.serialization.JsonSerializer.toJson(coredumpDir);
-    assert(generatedJSON == parseJSON(validString));
+    assert(generatedJSON == validJSON, format("Expected %s, got %s", validJSON, generatedJSON));
 
     auto coredumpDirParsed = new CoredumpDir(generatedJSON);
-    assert(coredumpDirParsed.targetPath == coredumpDir.targetPath);
-    assert(coredumpDirParsed.coredumps[0].exe == coredumpDir.coredumps[0].exe);
-    assert(coredumpDirParsed.coredumps[1].timestamp == coredumpDir.coredumps[1].timestamp);
+    assert(coredumpDirParsed.targetPath == coredumpDir.targetPath,
+        format("Expected %s, got %s", coredumpDir.targetPath, coredumpDirParsed.targetPath));
+    assert(coredumpDirParsed.coredumps[0].exe == coredumpDir.coredumps[0].exe,
+        format("Expected %s, got %s", coredumpDir.coredumps[0].exe, coredumpDirParsed.coredumps[0].exe));
+    assert(coredumpDirParsed.coredumps[1].timestamp == coredumpDir.coredumps[1].timestamp,
+        format("Expected %s, got %s", coredumpDir.coredumps[1].timestamp, coredumpDirParsed.coredumps[1].timestamp));
 }
