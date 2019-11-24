@@ -27,9 +27,12 @@ import corectl.options;
 import hunt.Exceptions : ConfigurationException;
 import hunt.util.Argument;
 
+static import core.stdc.errno;
+
 import std.algorithm;
 import std.algorithm.mutation : copy;
 import std.array;
+import std.exception;
 import std.file;
 import std.path;
 import std.stdio;
@@ -68,7 +71,19 @@ int main(string[] args)
         return 1;
     }
 
-    auto coreDir = new CoredumpDir(conf.targetPath);
+    CoredumpDir coreDir;
+
+    try {
+        coreDir = new CoredumpDir(conf.targetPath);
+    } catch (ErrnoException e) with (core.stdc.errno) {
+        switch(e.errno) {
+            case EACCES:
+                writeln("No coredumps collected yet.");
+                return 0;
+            default:
+                throw e;
+        }
+    }
 
     auto coreCtl = new CoreCtl(coreDir);
 
