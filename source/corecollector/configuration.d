@@ -26,21 +26,30 @@ import std.file;
 import std.path;
 import std.stdio;
 
+/// Path to where the configuration file is located at
 immutable configPath = buildPath("@CONF_PATH@", "corecollector.conf");
 
+/// The `Configuration` class, which holds the configuration options
+/// both corehelper and corectl need to know
 class Configuration
 {
+    /// How the user wants to compress coredumps
     @Value("compression")
     string compression = "none";
 
+    /// The size limit for coredumps
     @Value("maxSize")
     uint maxSize = 0;
 
+    /// The path to place coredumps at
     @Value("targetPath")
     string targetPath = "@COREDUMP_PATH@";
 
-    this() { }
+    /// Empty constructor used with hunt's `ConfigBuilder`
+    private this() { }
 
+    /// Construct a `Configuration` by supplying the `configPath`. You might want
+    /// to supply the `configPath` which is defined in this module.
     this(string configPath) {
         auto path = relativePath(configPath, std.file.thisExePath.dirName);
         ConfigBuilder confManager = new ConfigBuilder(path);

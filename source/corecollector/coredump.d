@@ -28,17 +28,24 @@ import std.path;
 import std.stdio;
 import std.uuid;
 
-immutable configName = "coredumps.json";
-
+/// A class describing a single coredump
 class Coredump {
+    /// The PID of the program which crashed
     ulong pid;
+    /// The UID of the user running the program which crashed
     ulong uid;
+    /// The GID of the user running the program which crashed
     ulong gid;
+    /// The signal which the program threw when crashing
     ulong sig;
+    /// The name of the executable that crashed
     string exe;
+    /// The UNIX timestamp at which the program crashed
     string timestamp;
-    string filename;
+    /// The name under which we're going to save the coredump
+    private string filename;
 
+    /// ctor to construct a `Coredump`
     this(ulong uid, ulong gid, ulong pid, ulong sig, string exe, string timestamp) {
         this.uid = uid;
         this.pid = pid;
@@ -48,6 +55,7 @@ class Coredump {
         this.timestamp = timestamp;
     }
 
+    /// ctor to construct a `Coredump` from a JSON value
     this(JSONValue json) {
         auto core = this(
             json["uid"].integer,
@@ -61,6 +69,7 @@ class Coredump {
         core.filename = generateCoredumpName();
     }
 
+    /// Generate a unique filename for a coredump.
     final string generateCoredumpName() {
         auto filename = this.exe ~ "-"
             ~ this.sig.to!string ~ "-"
@@ -72,23 +81,29 @@ class Coredump {
     }
 }
 
+/// The `CoredumpDir` holds information about all collected `Coredump`s
 class CoredumpDir {
+    /// All known `Coredump`s
     Coredump[] coredumps;
     private string targetPath;
+    /// The name of the configuration file in which data about the coredumps is saved.
+    immutable configName = "coredumps.json";
 
-    this() {
+    private this() {
         coredumps = new Coredump[0];
     }
 
+    /// ctor to directly construct a `CoredumpDir` from a JSON value containing multiple `Coredump`s.
     this(JSONValue json) {
         foreach(x; json["coredumps"].array) {
             coredumps ~= new Coredump(x);
         }
     }
 
+    /// ctor to construct a `CoredumpDir` from a `targetPath` in which a `coredumps.json` is contained
     this(string targetPath) {
         this.targetPath = targetPath;
-        auto configPath = buildPath(targetPath, configName);
+        auto configPath = buildPath(targetPath, this.configName);
         this.ensureDir(configPath);
 
         auto coredump_text = readText(configPath);
@@ -96,6 +111,7 @@ class CoredumpDir {
         this(coredump_json);
     }
 
+    /// Add a `Coredump` to the `CoredumpDir` and write it from the stdin to its target location.
     void addCoredump(Coredump coredump) {
         this.coredumps ~= coredump;
 
@@ -110,6 +126,7 @@ class CoredumpDir {
         }
     }
 
+    /// Make sure the `CoredumpDir` exists already and if it doesn't put a default, empty config in there.
     private void ensureDir(string configPath) {
         if (!configPath.exists) {
             if(!this.targetPath.exists) {
@@ -121,15 +138,15 @@ class CoredumpDir {
         }
     }
 
+    /// Write the configuration file of the `CoredumpDir` to the `configPath`.
     void writeConfig() {
         auto coredump_json = hunt.serialization.JsonSerializer.toJson(this).toString();
         writeConfig(coredump_json);
     }
 
     private void writeConfig(string JSONConfig) {
-        auto coredump_json = hunt.serialization.JsonSerializer.toJson(this).toString();
         auto configFile = File(buildPath(targetPath, configName), "w");
-        configFile.write(coredump_json);
+        configFile.write(JSONConfig);
     }
 }
 
