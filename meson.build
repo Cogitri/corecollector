@@ -18,6 +18,7 @@ prefix = get_option('prefix')
 libexec_dir = join_paths(prefix, get_option('libexecdir'), 'corecollector')
 varlib_dir = join_paths(prefix, get_option('localstatedir'), 'lib', 'corecollector')
 sysconf_dir = join_paths(prefix, get_option('sysconfdir'), 'corecollector')
+sysctl_dir = join_paths(prefix, get_option('sysconfdir'), 'sysctl.d')
 include_dir = join_paths(prefix, get_option('includedir'), 'd', 'corecollector')
 
 subdir('source')

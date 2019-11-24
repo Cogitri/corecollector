@@ -1,0 +1,1 @@
+kernel.core_pattern='|@LIBEXECDIR@/corehelper -e=%e -p=%P -s=%s -t=%t -u=%u -g=%g'
