@@ -23,36 +23,45 @@ import corecollector.coredump;
 
 import hunt.util.Argument;
 
+/// CLI arguments passed to this binary, usually by the kernel
 struct Options
 {
+    /// If a user does want to run this binary this will print the help
     @Option("help", "h")
     @Help("Prints this help.")
     OptionFlag help;
 
+    /// The string of the exe
     @Option("exe-name", "e")
     @Help("The name of the executable whose curedump you're sending me.")
     string exe;
 
+    /// The pid of the exe
     @Option("pid", "p")
     @Help("The PID of the executable whose coredump you're sending me.")
     ulong pid;
 
+    /// The uid of the exe
     @Option("uid", "u")
     @Help("The UID of the user who executed the executable whose coredump you're sending me.")
     ulong uid;
 
+    /// The gid of the exe
     @Option("gid", "g")
     @Help("The GID of the user the executable whose coredump you're sending me.")
     ulong gid;
 
+    /// The signal of the exe
     @Option("signal", "s")
     @Help("The signal the executable whose coredump you're sending me threw when crashing.")
     ulong signal;
 
+    /// The timestamp of the exe crashing
     @Option("timestamp", "t")
     @Help("The time the executable whose coredump you're sending me crashed.")
     string timestamp;
 
+    /// Convert a `Options` to a `Coredump`
     Coredump toCoredump() {
         return new Coredump(this.uid, this.gid, this.pid, this.signal, this.exe, this.timestamp);
     }

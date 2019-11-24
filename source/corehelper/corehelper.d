@@ -26,17 +26,25 @@ import corehelper.options;
 import std.exception : ErrnoException;
 import std.stdio : stderr, writef;
 
+/// `CoreHelper` is the main class of the `corehelper` module holding most
+/// of its functionality
 class CoreHelper {
+    /// The coredump we're currently handling
     Coredump coredump;
+    /// The configuration we loaded from the filesystem
     Configuration config;
+    /// The options that the user (kernel) has supplied on the CLI
     Options opt;
 
+    /// ctor for generating a `CoreHelper` with the configuration
+    /// and command line arguments.
     this(Configuration config, immutable Options opt) {
         this.config = config;
         this.opt = opt;
         this.coredump = this.opt.toCoredump;
     }
 
+    /// Write the coredump to the `CoredumpDir`
     int writeCoredump() {
         auto coredumpDir = new CoredumpDir(this.config.targetPath);
         try {
