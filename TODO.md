@@ -1,5 +1,3 @@
-* Set the sysctl `kernel.core_pattern` property
-    * Check if it's set when invoking `corectl`
 * Improve `corectl`'s UX
     * Add info subcommand
     * Make command parsing friendlier

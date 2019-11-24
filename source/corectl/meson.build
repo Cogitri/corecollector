@@ -1,7 +1,13 @@
+corectl_d = configure_file(
+    input: 'corectl.d',
+    output: 'corectl.d',
+    configuration: conf,
+)
+
 main_src = [
     'main.d',
     'options.d',
-    'corectl.d',
+    corectl_d,
 ]
 
 executable(
