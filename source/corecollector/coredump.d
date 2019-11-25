@@ -90,8 +90,7 @@ class Coredump {
     /// Generate a unique filename for a coredump.
     const final string generateCoredumpName()
     {
-        auto filename =  this.exePath
-            ~ this.exe ~ "-"
+        auto filename =  this.exe ~ "-"
             ~ this.sig.to!string ~ "-"
             ~ this.pid.to!string ~ "-"
             ~ this.uid.to!string ~ "-"
