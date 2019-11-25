@@ -24,6 +24,7 @@ import corecollector.coredump;
 import hunt.logging;
 
 import std.exception;
+import std.datetime;
 import std.file;
 import std.format;
 import std.path;
@@ -65,14 +66,14 @@ class CoreCtl {
         foreach(x; this.coredumpDir.coredumps)
         {
             writef(
-                "%s\t\t%s\t%d\t%d\t%d\t%d\t%d\t\n",
+                "%s\t\t%s\t%d\t%d\t%d\t%d\t%s\t\n",
                 x.exe,
                 x.exePath,
                 x.sig,
                 x.uid,
                 x.gid,
                 x.pid,
-                x.timestamp,
+                x.timestamp.toSimpleString(),
             );
         }
     }
