@@ -19,6 +19,7 @@
 
 module corecollector.configuration;
 
+import hunt.logging;
 import hunt.util.Configuration;
 
 import std.algorithm;
@@ -52,8 +53,10 @@ class Configuration
     /// to supply the `configPath` which is defined in this module.
     this(string configPath) {
         auto path = relativePath(configPath, std.file.thisExePath.dirName);
+        logDebugf("Loading configuration from relative path %s.", path);
         ConfigBuilder confManager = new ConfigBuilder(path);
         auto conf = confManager.build!Configuration();
+        logDebugf("Configuration: %s", conf);
         compression = move(conf.compression);
         maxSize = conf.maxSize;
         targetPath = move(conf.targetPath);

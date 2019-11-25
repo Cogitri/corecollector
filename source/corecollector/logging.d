@@ -17,25 +17,14 @@
     along with corecollector.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-module corectl.options;
+module source.corecollector.logging;
 
-import hunt.util.Argument;
+import hunt.logging;
 
-/// CLI `Options` of `corectl`
-struct Options
-{
-    /// Whether the user requests help (the cmd overview to the printed).
-    @Option("help", "h")
-    @Help("Prints this help.")
-    OptionFlag help;
-
-    /// The debug level to use
-    @Option("debug", "d")
-    @Help("What debug level to use. -1 = error (default), 0 = info, 1 = debug, 2 = trace.")
-    int debugLevel = -1;
-
-    /// What mode `corectl` should run in.
-    @Argument("mode")
-    @Help("What mode to start in [list|info]")
-    string mode;
+/// Setup the logging with the supplied logging level.
+void setupLogging(LogLevel l) {
+    LogConf conf;
+    conf.disableConsole = false;
+    conf.level = l;
+    logLoadConf(conf);
 }

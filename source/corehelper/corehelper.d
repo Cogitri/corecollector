@@ -23,8 +23,9 @@ import corecollector.configuration;
 import corecollector.coredump;
 import corehelper.options;
 
+import hunt.logging;
+
 import std.exception : ErrnoException;
-import std.stdio : stderr, writef;
 
 /// `CoreHelper` is the main class of the `corehelper` module holding most
 /// of its functionality
@@ -52,7 +53,7 @@ class CoreHelper {
             coredumpDir.writeConfig();
             return 0;
         } catch (ErrnoException e) {
-            stderr.writef("Couldn't save coredump due to error %s\n", e);
+            errorf("Couldn't save coredump due to error %s\n", e);
             return 1;
         }
     }

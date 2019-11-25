@@ -6,7 +6,8 @@ configuration_d = configure_file(
 
 lib_src = [
     configuration_d,
-    'coredump.d'
+    'coredump.d',
+    'logging.d',
 ]
 
 core_lib = library(

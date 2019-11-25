@@ -2,6 +2,8 @@ module corectl.corectl;
 
 import corecollector.coredump;
 
+import hunt.logging;
+
 import std.exception;
 import std.file;
 import std.format;
@@ -27,16 +29,15 @@ class CoreCtl {
             ~ buildPath("@LIBEXECDIR@", "corehelper")
             ~ " -e=%e -E=%E -p=%P -s=%s -t=%t -u=%u -g=%g\n";
 
-        enforce(
-            sysctlVal == expectedVal,
-            format(
+        if (sysctlVal != expectedVal) {
+            errorf(
                 "The sysctl value for 'kernel.core_pattern' is wrong!
                 As such corehelper won't receive any coredumps from the kernel.
                 Expected %s, got %s",
                 expectedVal,
                 sysctlVal,
-            ),
-        );
+            );
+        }
     }
 
     /// Write all available coredumps to the stdout

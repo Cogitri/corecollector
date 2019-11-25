@@ -21,10 +21,12 @@ module corecollector.corecollector;
 
 import corecollector.configuration;
 import corecollector.coredump;
+import corecollector.logging;
 import corectl.corectl;
 import corectl.options;
 
 import hunt.Exceptions : ConfigurationException;
+import hunt.logging;
 import hunt.util.Argument;
 
 static import core.stdc.errno;
@@ -34,10 +36,11 @@ import std.algorithm.mutation : copy;
 import std.array;
 import std.exception;
 import std.file;
+import std.format;
 import std.path;
 import std.stdio;
 
-private immutable usage = usageString!Options("corecollector");
+private immutable usage = usageString!Options("corectl");
 private immutable help = helpString!Options;
 
 int main(string[] args)
@@ -62,18 +65,41 @@ int main(string[] args)
         return 0;
     }
 
+    LogLevel logLevel;
+
+    switch(options.debugLevel) with (LogLevel) {
+        case -1:
+            logLevel = LOG_ERROR;
+            break;
+        case 0:
+            logLevel = LOG_WARNING;
+            break;
+        case 1:
+            logLevel = LOG_INFO;
+            break;
+        case 2:
+            logLevel = LOG_DEBUG;
+            break;
+        default:
+            assert(0, format("Invalid loglevel '%s'", options.debugLevel));
+    }
+
+    setupLogging(logLevel);
+
     Configuration conf;
 
     try {
+        logDebugf("Loading configuration from path %s", configPath);
         conf = new Configuration(configPath);
     } catch (ConfigurationException e) {
-        stderr.writef("Couldn't read configuration at path %s due to error %s\n", configPath, e);
+        criticalf("Couldn't read configuration at path %s due to error %s\n", configPath, e);
         return 1;
     }
 
     CoredumpDir coreDir;
 
     try {
+        logDebugf("Opening CoredumpDir at path %s", conf.targetPath);
         coreDir = new CoredumpDir(conf.targetPath);
     } catch (ErrnoException e) with (core.stdc.errno) {
         switch(e.errno) {
@@ -92,7 +118,7 @@ int main(string[] args)
             coreCtl.listCoredumps();
             break;
         default:
-            stderr.writef("Unknown operation %s\n", options.mode);
+            criticalf("Unknown operation %s\n", options.mode);
             break;
     }
 
