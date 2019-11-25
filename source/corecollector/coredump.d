@@ -23,6 +23,7 @@ import hunt.logging;
 static import hunt.serialization.JsonSerializer;
 
 import std.conv;
+import std.datetime;
 import std.file;
 import std.json;
 import std.outbuffer;
@@ -45,7 +46,7 @@ class Coredump {
     /// The path of the executable
     string exePath;
     /// The UNIX timestamp at which the program crashed
-    long timestamp;
+    SysTime timestamp;
     /// The name under which we're going to save the coredump
     private string filename;
 
@@ -55,7 +56,7 @@ class Coredump {
         const long gid,
         const long pid,
         const long sig,
-        const long timestamp,
+        const SysTime timestamp,
         const string exe,
         const string exePath,
         )
@@ -78,7 +79,7 @@ class Coredump {
             json["gid"].integer,
             json["pid"].integer,
             json["sig"].integer,
-            json["timestamp"].integer,
+            SysTime(json["timestamp"].integer),
             json["exe"].str,
             json["exePath"].str,
         );
@@ -95,7 +96,7 @@ class Coredump {
             ~ this.pid.to!string ~ "-"
             ~ this.uid.to!string ~ "-"
             ~ this.gid.to!string ~ "-"
-            ~ this.timestamp.to!string;
+            ~ this.timestamp.toISOString;
         auto filenameFinal = filename ~ sha1UUID(filename).to!string;
         logDebugf("Generated filename for coredump %s: %s", this, filenameFinal);
         return filenameFinal;
@@ -184,7 +185,7 @@ class CoredumpDir {
 unittest {
     import std.format : format;
 
-    auto core = new Coredump(1000, 1000, 14_948, 6, 1_574_450_085, "Xwayland", "/usr/bin/");
+    auto core = new Coredump(1000, 1000, 14_948, 6, SysTime(1_574_450_085), "Xwayland", "/usr/bin/");
 
     auto validString =
         `{"exe":"Xwayland","exePath":"\/usr\/bin\/","filename":[],`
@@ -205,8 +206,8 @@ unittest {
 unittest {
     import std.format : format;
 
-    auto core1 = new Coredump(1, 1, 1, 1, 1970, "test", "/usr/bin/");
-    auto core2 = new Coredump(1, 1, 1, 1, 1971, "test", "/usr/bin/");
+    auto core1 = new Coredump(1, 1, 1, 1, SysTime(1970), "test", "/usr/bin/");
+    auto core2 = new Coredump(1, 1, 1, 1, SysTime(1971), "test", "/usr/bin/");
     auto coredumpDir = new CoredumpDir();
     coredumpDir.coredumps ~= core1;
     coredumpDir.coredumps ~= core2;

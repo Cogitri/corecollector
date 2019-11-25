@@ -24,6 +24,7 @@ import corecollector.coredump;
 import hunt.util.Argument;
 
 import std.array;
+import std.datetime;
 
 /// CLI arguments passed to this binary, usually by the kernel
 struct Options
@@ -72,6 +73,7 @@ struct Options
     Coredump toCoredump() {
         // The kernel sends `!` instead of `/`: http://man7.org/linux/man-pages/man5/core.5.html
         auto slashPath = this.exePath.replace("!", "/");
-        return new Coredump(this.uid, this.gid, this.pid, this.signal, this.timestamp, this.exe, slashPath);
+        SysTime dTime = unixTimeToStdTime(this.timestamp);
+        return new Coredump(this.uid, this.gid, this.pid, this.signal, dTime, this.exe, slashPath);
     }
 }
