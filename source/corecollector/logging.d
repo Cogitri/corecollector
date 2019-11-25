@@ -25,6 +25,7 @@ import hunt.logging;
 void setupLogging(const LogLevel l) {
     LogConf conf;
     conf.disableConsole = false;
+    conf.fileName = "/dev/null";
     conf.level = l;
     logLoadConf(conf);
 }
