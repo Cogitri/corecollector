@@ -50,18 +50,28 @@ class Coredump {
     private string filename;
 
     /// ctor to construct a `Coredump`
-    this(long uid, long gid, long pid, long sig, long timestamp, string exe, string exePath) {
-        this.uid = uid;
-        this.pid = pid;
-        this.gid = gid;
-        this.sig = sig;
-        this.exe = exe;
-        this.exePath = exePath;
-        this.timestamp = timestamp;
-    }
+    this(
+        const long uid,
+        const long gid,
+        const long pid,
+        const long sig,
+        const long timestamp,
+        const string exe,
+        const string exePath,
+        )
+        {
+            this.uid = uid;
+            this.pid = pid;
+            this.gid = gid;
+            this.sig = sig;
+            this.exe = exe;
+            this.exePath = exePath;
+            this.timestamp = timestamp;
+        }
 
     /// ctor to construct a `Coredump` from a JSON value
-    this(JSONValue json) {
+    this(const JSONValue json)
+    {
         logDebugf("Constructing Coredump from JSON: %s", json);
         auto core = this(
             json["uid"].integer,
@@ -77,7 +87,8 @@ class Coredump {
     }
 
     /// Generate a unique filename for a coredump.
-    final string generateCoredumpName() {
+    final string generateCoredumpName()
+    {
         auto filename =  this.exePath
             ~ this.exe ~ "-"
             ~ this.sig.to!string ~ "-"
@@ -104,7 +115,7 @@ class CoredumpDir {
     }
 
     /// ctor to directly construct a `CoredumpDir` from a JSON value containing multiple `Coredump`s.
-    this(JSONValue json) {
+    this(const JSONValue json) {
         logDebugf("Constructing CoredumpDir from JSON %s", json);
         foreach(x; json["coredumps"].array) {
             coredumps ~= new Coredump(x);
@@ -112,7 +123,7 @@ class CoredumpDir {
     }
 
     /// ctor to construct a `CoredumpDir` from a `targetPath` in which a `coredumps.json` is contained
-    this(string targetPath) {
+    this(const string targetPath) {
         this.targetPath = targetPath;
         auto configPath = buildPath(targetPath, this.configName);
         this.ensureDir(configPath);
@@ -142,7 +153,7 @@ class CoredumpDir {
     }
 
     /// Make sure the `CoredumpDir` exists already and if it doesn't put a default, empty config in there.
-    private void ensureDir(string configPath) {
+    private void ensureDir(const string configPath) {
         if (!configPath.exists) {
             infof("Config path '%s' doesn't exist, creating it and writing default config to it...", configPath);
             if(!this.targetPath.exists) {
@@ -160,7 +171,7 @@ class CoredumpDir {
         writeConfig(coredump_json);
     }
 
-    private void writeConfig(string JSONConfig) {
+    private void writeConfig(const string JSONConfig) {
         auto path = buildPath(targetPath, configName);
         logDebugf("Writing CoredumpDir config '%s' to path '%s'", JSONConfig, path);
         auto configFile = File(path, "w");
@@ -176,7 +187,8 @@ unittest {
     auto core = new Coredump(1000, 1000, 14_948, 6, 1_574_450_085, "Xwayland", "/usr/bin/");
 
     auto validString =
-        `{"exe":"Xwayland","exePath":"\/usr\/bin\/","filename":[],"gid":1000,"pid":14948,"sig":6,"timestamp":1574450085,"uid":1000}`;
+        `{"exe":"Xwayland","exePath":"\/usr\/bin\/","filename":[],`
+        ~ `"gid":1000,"pid":14948,"sig":6,"timestamp":1574450085,"uid":1000}`;
     auto validJSON = parseJSON(validString);
     auto generatedJSON = hunt.serialization.JsonSerializer.toJson(core);
     assert(generatedJSON == validJSON, format("Expected %s, got %s", validJSON, generatedJSON));
@@ -201,7 +213,8 @@ unittest {
 
     auto validString = `{"configName":"coredumps.json","coredumps":`
         ~ `[{"exe":"test","exePath":"\/usr\/bin\/","filename":[],"gid":1,"pid":1,"sig":1, "timestamp":1970,"uid":1},`
-        ~ `{"exe":"test","exePath":"\/usr\/bin\/","filename":[],"gid":1,"pid":1,"sig":1,"timestamp":1971,"uid":1}],"targetPath":[]}`;
+        ~ `{"exe":"test","exePath":"\/usr\/bin\/","filename":[],"gid":1,"pid":1,"sig":1,"timestamp":1971,"uid":1}],`
+        ~ `"targetPath":[]}`;
     auto validJSON = parseJSON(validString);
     auto generatedJSON = hunt.serialization.JsonSerializer.toJson(coredumpDir);
     assert(generatedJSON == validJSON, format("Expected %s, got %s", validJSON, generatedJSON));

@@ -52,7 +52,7 @@ int main(string[] args)
         return 1;
     }
 
-    auto coreHelper = new CoreHelper(conf, options);
+    auto coreHelper = new CoreHelper(cast(immutable Configuration)conf, options);
 
     return coreHelper.writeCoredump();
 }

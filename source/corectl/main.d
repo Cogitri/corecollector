@@ -111,7 +111,7 @@ int main(string[] args)
         }
     }
 
-    auto coreCtl = new CoreCtl(coreDir);
+    auto coreCtl = new CoreCtl(cast(immutable) coreDir);
 
     switch (options.mode) {
         case "list":

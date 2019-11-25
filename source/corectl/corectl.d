@@ -32,10 +32,10 @@ import std.stdio;
 /// Class holding the logic of the `corectl` executable.
 class CoreCtl {
     /// The `CoredumpDir` holding existing coredumps.
-    CoredumpDir coredumpDir;
+    immutable CoredumpDir coredumpDir;
 
     /// ctor to construct with an existing `CoredumpDir`.
-    this(CoredumpDir coreDir) {
+    this(immutable CoredumpDir coreDir) {
         this.coredumpDir = coreDir;
         this.ensureCorrectSysctl();
     }
