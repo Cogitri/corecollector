@@ -65,26 +65,7 @@ int main(string[] args)
         return 0;
     }
 
-    LogLevel logLevel;
-
-    switch(options.debugLevel) with (LogLevel) {
-        case -1:
-            logLevel = LOG_ERROR;
-            break;
-        case 0:
-            logLevel = LOG_WARNING;
-            break;
-        case 1:
-            logLevel = LOG_INFO;
-            break;
-        case 2:
-            logLevel = LOG_DEBUG;
-            break;
-        default:
-            assert(0, format("Invalid loglevel '%s'", options.debugLevel));
-    }
-
-    setupLogging(logLevel);
+    startLogging(options.debugLevel);
 
     Configuration conf;
 
@@ -119,8 +100,32 @@ int main(string[] args)
             break;
         default:
             criticalf("Unknown operation %s\n", options.mode);
-            break;
+            return 1;
     }
 
     return 0;
+}
+
+/// Setup logging for this moduke, depending on user input
+private void startLogging(int debugLevel) {
+    LogLevel logLevel;
+
+    switch(debugLevel) with (LogLevel) {
+        case -1:
+            logLevel = LOG_ERROR;
+            break;
+        case 0:
+            logLevel = LOG_WARNING;
+            break;
+        case 1:
+            logLevel = LOG_INFO;
+            break;
+        case 2:
+            logLevel = LOG_DEBUG;
+            break;
+        default:
+            assert(0, format("Invalid loglevel '%s'", debugLevel));
+    }
+
+    setupLogging(logLevel);
 }
