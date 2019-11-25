@@ -88,7 +88,7 @@ class Coredump {
     }
 
     /// Generate a unique filename for a coredump.
-    final string generateCoredumpName()
+    const final string generateCoredumpName()
     {
         auto filename =  this.exePath
             ~ this.exe ~ "-"
@@ -179,6 +179,10 @@ class CoredumpDir {
         auto buf = new OutBuffer();
         buf.write(JSONConfig);
         configFile.write(buf.toString());
+    }
+
+    const string getTargetPath() {
+        return this.targetPath;
     }
 }
 

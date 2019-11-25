@@ -98,6 +98,14 @@ int main(string[] args)
         case "list":
             coreCtl.listCoredumps();
             break;
+        case "debug":
+            coreCtl.debugCore(5);
+            break;
+        case "info":
+            break;
+        case "dump":
+            coreCtl.dumpCore(5, "");
+            break;
         default:
             criticalf("Unknown operation %s\n", options.mode);
             return 1;

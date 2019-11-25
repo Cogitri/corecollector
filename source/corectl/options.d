@@ -36,6 +36,19 @@ struct Options
 
     /// What mode `corectl` should run in.
     @Argument("mode")
-    @Help("What mode to start in [list|info]")
+    @Help(
+        "What mode to start in:
+        
+        - list:
+            Lists core dumps that have been recorded by corecollector with the following information:
+            
+            -Executable: What executable has crashed.
+            -Path: The path of the executable that has crashed.
+            -Signal: The signal which has terminated the application.
+            -UID: The UID of the process that has crashed.
+            -GID: The GID of the process that has crashed.
+            -PID: The PID the process was running under when it crashed.
+            -Timestamp: The time at which the program crashed.
+        -debug")
     string mode;
 }

@@ -28,6 +28,7 @@ import std.datetime;
 import std.file;
 import std.format;
 import std.path;
+import std.process;
 import std.stdio;
 
 /// Class holding the logic of the `corectl` executable.
@@ -62,11 +63,14 @@ class CoreCtl {
 
     /// Write all available coredumps to the stdout
     void listCoredumps() {
-        writeln("Executable\tPath\t\tSignal\tUID\tGID\tPID\tTimestamp");
+        writeln("ID\tExecutable\tPath\t\tSignal\tUID\tGID\tPID\tTimestamp");
+        int i;
         foreach(x; this.coredumpDir.coredumps)
         {
+            i++;
             writef(
-                "%s\t\t%s\t%d\t%d\t%d\t%d\t%s\t\n",
+                "%d\t%s\t\t%s\t%d\t%d\t%d\t%d\t%s\t\n",
+                i,
                 x.exe,
                 x.exePath,
                 x.sig,
@@ -76,5 +80,52 @@ class CoreCtl {
                 x.timestamp.toSimpleString(),
             );
         }
+    }
+
+    /// Return path to the coredump
+    string getCorePath(uint coreNum) {
+        return buildPath(
+            coredumpDir.getTargetPath(),
+            coredumpDir.coredumps[coreNum].generateCoredumpName(),
+        );
+    }
+
+    /// Return path to the executable
+    string getExePath(uint coreNum) {
+        return buildPath(
+            coredumpDir.coredumps[coreNum].exePath,
+            coredumpDir.coredumps[coreNum].exe,
+        );
+    }
+
+    /// Dump coredump `coreNum` to `targetPath`
+    void dumpCore(uint coreNum, string targetPath) {
+        File targetFile;
+
+        switch(targetPath) {
+            case "":
+            case "stdout":
+                targetFile = stdout;
+                break;
+            default:
+                targetFile = File(targetPath, "w");
+                break;
+        }
+
+
+        auto sourceFile = File(getCorePath(coreNum), "r");
+
+        foreach (ubyte[] buffer; sourceFile.byChunk(new ubyte[4096])) {
+            targetFile.rawWrite(buffer);
+        }
+    }
+
+    /// Open coredump `coreNum` in debugger
+    void debugCore(uint coreNum) {
+        auto corePath = getCorePath(coreNum);
+        auto exePath = getExePath(coreNum);
+        auto debuggerPid = spawnProcess(["gdb", exePath, corePath]);
+        scope(exit)
+            wait(debuggerPid);
     }
 }
