@@ -40,31 +40,15 @@ import std.format;
 import std.path;
 import std.stdio;
 
-private immutable usage = usageString!Options("corectl");
-private immutable help = helpString!Options;
-
 int main(string[] args)
 {
-    Options options;
 
-    try
-    {
-        options = parseArgs!Options(args[1 .. $]);
+    auto options = new Options(args);
+    if (options.showHelp) {
+        writeln(helpText);
+    } else if (options.showVersion) {
+        writeln("0.0.1");
     }
-    catch (ArgParseError e)
-    {
-        stderr.writeln(e.msg);
-        stderr.write(usage);
-        return 1;
-    }
-    catch (ArgParseHelp e)
-    {
-        // Help was requested
-        stderr.writeln(usage);
-        stderr.write(help);
-        return 0;
-    }
-
     startLogging(options.debugLevel);
 
     Configuration conf;
@@ -99,12 +83,12 @@ int main(string[] args)
             coreCtl.listCoredumps();
             break;
         case "debug":
-            coreCtl.debugCore(5);
+            coreCtl.debugCore(options.id);
             break;
         case "info":
             break;
         case "dump":
-            coreCtl.dumpCore(5, "");
+            coreCtl.dumpCore(options.id, options.file);
             break;
         default:
             criticalf("Unknown operation %s\n", options.mode);

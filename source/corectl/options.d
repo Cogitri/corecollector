@@ -19,36 +19,78 @@
 
 module corectl.options;
 
-import hunt.util.Argument;
+import std.conv;
+import std.exception;
+import std.format;
+import std.getopt;
+
+immutable helpText =
+"
+Usage:
+  corectl <subcommand> [OPTION...]
+  
+List and interact with coredumps
+
+Subcommands:
+  debug [ID]        - Open the coredump identified by ID in a debugger.
+  dump  [ID] [FILE] - Dump the coredump identified by ID to file denoted by FILE.
+                      Defaults to 'stdout'.
+  info [ID]         - Get more detailed information for the coredump identified by ID.
+  list              - List all available coredumps.
+  
+Help Options:
+  -h, --help         - Show help options.
+
+Application Options:
+  -v, --version      - Print program version.
+  -d, --debug [0-3]  - Specify the debug level.";
 
 /// CLI `Options` of `corectl`
-struct Options
+class Options
 {
-    /// Whether the user requests help (the cmd overview to the printed).
-    @Option("help", "h")
-    @Help("Prints this help.")
-    OptionFlag help;
-
-    /// The debug level to use
-    @Option("debug", "d")
-    @Help("What debug level to use. -1 = error (default), 0 = info, 1 = debug, 2 = trace.")
+    bool showVersion;
+    bool showHelp;
     int debugLevel = -1;
-
-    /// What mode `corectl` should run in.
-    @Argument("mode")
-    @Help(
-        "What mode to start in:
-        
-        - list:
-            Lists core dumps that have been recorded by corecollector with the following information:
-            
-            -Executable: What executable has crashed.
-            -Path: The path of the executable that has crashed.
-            -Signal: The signal which has terminated the application.
-            -UID: The UID of the process that has crashed.
-            -GID: The GID of the process that has crashed.
-            -PID: The PID the process was running under when it crashed.
-            -Timestamp: The time at which the program crashed.
-        -debug")
+    int id;
     string mode;
+    string file;
+
+    this(string[] args) {
+        getopt(args,
+            "help|h", &showHelp,
+            "version|v", &showVersion,
+            "debug|d", &debugLevel,
+        );
+
+        if (showHelp || showVersion) {
+            return;
+        }
+
+        enforce(args.length >= 2, "Please specify a subcommand.");
+
+        this.mode = args[1];
+        switch(this.mode) {
+            case "list":
+                enforce(args.length == 2, "Didn't expect additional arguments to 'list'");
+                break;
+            case "debug":
+            case "info":
+                enforce(args.length == 3, "Only expected two arguments (subcommand and ID)");
+                this.id = args[2].to!uint - 1;
+                break;
+            case "dump":
+                if (args.length == 3) {
+                    this.id = args[2].to!uint - 1;
+                } else if (args.length == 4) {
+                    this.id = args[2].to!uint - 1;
+                    this.file = args[3];
+                } else {
+                    assert(0, "Expected either ID or ID and file to dump to for subcommand");
+                }
+
+                break;
+            default:
+                assert(0, format("Unknown subcommand %s", this.mode));
+        }
+    }
 }
