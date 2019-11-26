@@ -46,9 +46,9 @@ class CoreCtl {
     void ensureCorrectSysctl() {
         string sysctlVal = readText("/proc/sys/kernel/core_pattern");
 
-        string expectedVal = "|"
+        string expectedVal = "'|"
             ~ buildPath("@LIBEXECDIR@", "corehelper")
-            ~ " -e=%e -E=%E -p=%P -s=%s -t=%t -u=%u -g=%g\n";
+            ~ " -e=%e -E=%E -p=%P -s=%s -t=%t -u=%u -g=%g'\n";
 
         if (sysctlVal != expectedVal) {
             errorf(
