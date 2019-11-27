@@ -21,5 +21,14 @@ sysconf_dir = join_paths(prefix, get_option('sysconfdir'), 'corecollector')
 sysctl_dir = join_paths(prefix, get_option('sysconfdir'), 'sysctl.d')
 include_dir = join_paths(prefix, get_option('includedir'), 'd', 'corecollector')
 
+vcs_tag = run_command('git', 'rev-parse', '--short', 'HEAD').stdout().strip()
+if vcs_tag == ''
+    corecollector_version = meson.project_version()
+else
+    corecollector_version = meson.project_version() + '-@0@'.format (vcs_tag)
+endif
+
+
+
 subdir('source')
 subdir('data')

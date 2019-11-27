@@ -4,9 +4,15 @@ corectl_d = configure_file(
     configuration: conf,
 )
 
+main_d = configure_file(
+    input: 'main.d',
+    output: 'main.d',
+    configuration: conf,
+)
+
 main_src = [
-    'main.d',
     'options.d',
+    main_d,
     corectl_d,
 ]
 

@@ -46,8 +46,10 @@ int main(string[] args)
     auto options = new Options(args);
     if (options.showHelp) {
         writeln(helpText);
+        return 0;
     } else if (options.showVersion) {
-        writeln("0.0.1");
+        writeln("@VERSION@");
+        return 0;
     }
     startLogging(options.debugLevel);
 
