@@ -25,6 +25,7 @@ import corehelper.options;
 
 import hunt.logging;
 
+import std.conv;
 import std.exception : ErrnoException;
 
 /// `CoreHelper` is the main class of the `corehelper` module holding most
@@ -47,7 +48,7 @@ class CoreHelper {
 
     /// Write the coredump to the `CoredumpDir`
     int writeCoredump() {
-        auto coredumpDir = new CoredumpDir(this.config.targetPath, fromString(this.config.compression));
+        auto coredumpDir = new CoredumpDir(this.config.targetPath, this.config.compression.to!Compression);
         try {
             coredumpDir.addCoredump(this.coredump);
             coredumpDir.writeConfig();
@@ -56,17 +57,5 @@ class CoreHelper {
             errorf("Couldn't save coredump due to error %s\n", e);
             return 1;
         }
-    }
-}
-
-Compression fromString(string s) {
-    switch(s) with (Compression) {
-        case "none":
-            return None;
-        case "zlib":
-            return Zlib;
-        default:
-            errorf("Unsupported compression method '%s'!", s);
-            assert(0);
     }
 }

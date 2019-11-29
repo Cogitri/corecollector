@@ -105,8 +105,8 @@ class Coredump {
 }
 
 enum Compression {
-    None,
-    Zlib,
+    None = "none",
+    Zlib = "zlib",
 }
 
 /// The `CoredumpDir` holds information about all collected `Coredump`s
