@@ -22,6 +22,7 @@ module corecollector.coredump;
 import hunt.logging;
 static import hunt.serialization.JsonSerializer;
 
+import std.algorithm;
 import std.conv;
 import std.datetime;
 import std.file;
@@ -30,6 +31,7 @@ import std.outbuffer;
 import std.path;
 import std.stdio;
 import std.uuid;
+import std.zlib;
 
 /// A class describing a single coredump
 class Coredump {
@@ -102,8 +104,14 @@ class Coredump {
     }
 }
 
+enum Compression {
+    None,
+    Zlib,
+}
+
 /// The `CoredumpDir` holds information about all collected `Coredump`s
 class CoredumpDir {
+    private Compression compression = Compression.None;
     /// All known `Coredump`s
     Coredump[] coredumps;
     private string targetPath;
@@ -114,6 +122,11 @@ class CoredumpDir {
         coredumps = new Coredump[0];
     }
 
+    this(Compression compression) {
+        this.compression = compression;
+        this();
+    }
+
     /// ctor to directly construct a `CoredumpDir` from a JSON value containing multiple `Coredump`s.
     this(const JSONValue json) {
         logDebugf("Constructing CoredumpDir from JSON %s", json);
@@ -121,6 +134,12 @@ class CoredumpDir {
             coredumps ~= new Coredump(x);
         }
     }
+
+    this(const JSONValue json, Compression compression) {
+        this.compression = compression;
+        this(json);
+    }
+
 
     /// ctor to construct a `CoredumpDir` from a `targetPath` in which a `coredumps.json` is contained
     this(const string targetPath) {
@@ -135,6 +154,11 @@ class CoredumpDir {
         this(coredump_json);
     }
 
+    this(const string targetPath, Compression compression) {
+        this.compression = compression;
+        this(targetPath);
+    }
+
     /// Add a `Coredump` to the `CoredumpDir` and write it from the stdin to its target location.
     void addCoredump(Coredump coredump) {
         logDebugf("Adding coredump '%s'", coredump);
@@ -146,9 +170,21 @@ class CoredumpDir {
             target.close();
 
         logDebugf("Writing coredump to path '%s'", coredumpPath);
-        foreach (ubyte[] buffer; stdin.byChunk(new ubyte[4096]))
-        {
-            target.rawWrite(buffer);
+
+        switch(this.compression) with (Compression) {
+            case None:
+                foreach (ubyte[] buffer; stdin.byChunk(new ubyte[4096])) {
+                    target.rawWrite(buffer);
+                }
+                break;
+            case Zlib:
+                auto compressor = new Compress;
+                foreach (chunk; stdin.byChunk(new ubyte[4096]).map!(x => compressor.compress(x))) {
+                    target.rawWrite(chunk);
+                }
+                break;
+            default:
+                assert(0);
         }
     }
 

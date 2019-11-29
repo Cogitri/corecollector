@@ -28,7 +28,5 @@ else
     corecollector_version = meson.project_version() + '-@0@'.format (vcs_tag)
 endif
 
-
-
 subdir('source')
 subdir('data')

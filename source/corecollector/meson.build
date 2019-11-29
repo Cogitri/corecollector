@@ -22,6 +22,7 @@ core_lib = library(
 )
 
 core_lib_dep = declare_dependency(
+    dependencies: hunt_dep,
     link_with: core_lib,
     include_directories: src_inc,
     link_args: '-link-defaultlib-shared',
