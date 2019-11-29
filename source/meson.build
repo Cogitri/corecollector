@@ -7,8 +7,6 @@ conf.set('CONF_PATH', sysconf_dir)
 conf.set('LIBEXECDIR', libexec_dir)
 conf.set('VERSION', corecollector_version)
 
-dlang = import('dlang')
-
 subdir('corecollector')
 
 subdir('corectl')
