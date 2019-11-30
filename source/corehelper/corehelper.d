@@ -27,6 +27,7 @@ import hunt.logging;
 
 import std.conv;
 import std.exception : ErrnoException;
+import std.string;
 
 /// `CoreHelper` is the main class of the `corehelper` module holding most
 /// of its functionality
@@ -48,7 +49,7 @@ class CoreHelper {
 
     /// Write the coredump to the `CoredumpDir`
     int writeCoredump() {
-        auto coredumpDir = new CoredumpDir(this.config.targetPath, this.config.compression.to!Compression);
+        auto coredumpDir = new CoredumpDir(this.config.targetPath, this.config.compression.capitalize().to!Compression);
         try {
             coredumpDir.addCoredump(this.coredump);
             coredumpDir.writeConfig();

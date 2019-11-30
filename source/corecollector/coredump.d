@@ -105,8 +105,8 @@ class Coredump {
 }
 
 enum Compression {
-    None = "none",
-    Zlib = "zlib",
+    None,
+    Zlib,
 }
 
 /// The `CoredumpDir` holds information about all collected `Coredump`s
@@ -251,7 +251,7 @@ unittest {
     coredumpDir.coredumps ~= core1;
     coredumpDir.coredumps ~= core2;
 
-    auto validString = `{"configName":"coredumps.json","coredumps":`
+    auto validString = `{"compression":0,"configName":"coredumps.json","coredumps":`
         ~ `[{"exe":"test","exePath":"\/usr\/bin\/","filename":[],"gid":1,"pid":1,"sig":1, "timestamp":1970,"uid":1},`
         ~ `{"exe":"test","exePath":"\/usr\/bin\/","filename":[],"gid":1,"pid":1,"sig":1,"timestamp":1971,"uid":1}],`
         ~ `"targetPath":[]}`;
