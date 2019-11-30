@@ -13,6 +13,7 @@ d_mod_version = []
 src_inc = include_directories('source')
 
 hunt_dep = dependency('hunt-1')
+lz4_dep = dependency('liblz4')
 
 prefix = get_option('prefix')
 libexec_dir = join_paths(prefix, get_option('libexecdir'), 'corecollector')
