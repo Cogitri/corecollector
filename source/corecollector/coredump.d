@@ -234,7 +234,7 @@ unittest {
 
     auto validString =
         `{"compression":0,"exe":"Xwayland","exePath":"\/usr\/bin\/","filename":[],`
-        ~ `"gid":1000,"pid":14948,"sig":6,"timestamp":1574450085,"uid":1000}`;
+        ~ `"gid":1000,"pid":14948,"sig":6,"timestamp":1574450085,"uid":1000, "uncompressedSize":0}`;
     auto validJSON = parseJSON(validString);
     auto generatedJSON = hunt.serialization.JsonSerializer.toJson(core);
     assert(generatedJSON == validJSON, format("Expected %s, got %s", validJSON, generatedJSON));
@@ -258,8 +258,8 @@ unittest {
     coredumpDir.coredumps ~= core2;
 
     auto validString = `{"configName":"coredumps.json","coredumps":`
-        ~ `[{"compression":0,"exe":"test","exePath":"\/usr\/bin\/","filename":[],"gid":1,"pid":1,"sig":1, "timestamp":1970,"uid":1},`
-        ~ `{"compression":0,"exe":"test","exePath":"\/usr\/bin\/","filename":[],"gid":1,"pid":1,"sig":1,"timestamp":1971,"uid":1}],`
+        ~ `[{"compression":0,"exe":"test","exePath":"\/usr\/bin\/","filename":[],"gid":1,"pid":1,"sig":1, "timestamp":1970,"uid":1, "uncompressedSize":0},`
+        ~ `{"compression":0,"exe":"test","exePath":"\/usr\/bin\/","filename":[],"gid":1,"pid":1,"sig":1,"timestamp":1971,"uid":1, "uncompressedSize":0}],`
         ~ `"targetPath":[]}`;
     auto validJSON = parseJSON(validString);
     auto generatedJSON = hunt.serialization.JsonSerializer.toJson(coredumpDir);

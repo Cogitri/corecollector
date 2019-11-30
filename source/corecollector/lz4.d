@@ -3,6 +3,7 @@ module corecollector.lz4;
 import hunt.logging;
 
 import core.stdc.stdlib;
+import std.exception;
 import std.format;
 import std.stdio;
 
@@ -18,7 +19,7 @@ extern (C) {
     int LZ4_decompress_safe(in char* src, char* dst, in int compressedSize, in int dstCapacity) @nogc;
 }
 
-/// Compression
+/// Compress the data in `uncompressedData` with LZ4 compression.
 ubyte[] compressData(const ubyte[] uncompressedData) {
     immutable int uncompressedDataSize = cast(int)uncompressedData.length * cast(int)ubyte.sizeof;
     immutable auto maxDstSize = LZ4_compressBound(uncompressedDataSize);
@@ -33,7 +34,7 @@ ubyte[] compressData(const ubyte[] uncompressedData) {
     const auto compressedDataSize =
         LZ4_compress_default(cast(char*)uncompressedData.ptr, compressedData, uncompressedDataSize, maxDstSize);
     if (compressedDataSize <= 0) {
-        assert(0, "A 0 or negative result from LZ4_compress_default indicates a failure trying to compress the data.");
+        enforce(0, "A 0 or negative result from LZ4_compress_default indicates a failure trying to compress the data.");
     } else {
         logDebugf(
             "We successfully compressed some data! Compressed: %d, Uncompressed %d\n",
@@ -46,13 +47,24 @@ ubyte[] compressData(const ubyte[] uncompressedData) {
     return cast(ubyte[])compressedData[0..arrayLength];
 }
 
-/// Decompression
+/// Decompress LZ4 data in `compressedData`. The uncompressedData may only be `uncompressedDataSize`
+/// big.
 ubyte[] decompressData(const ubyte[] compressedData, uint uncompressedDataSize) {
     immutable auto compressedDataSize = cast(int)compressedData.length * cast(int)char.sizeof;
 
     auto uncompressedData = cast(char*)malloc(uncompressedDataSize);
-    LZ4_decompress_safe(cast(char*)compressedData.ptr, uncompressedData, compressedDataSize, uncompressedDataSize);
-    return cast(ubyte[])uncompressedData[0..(uncompressedDataSize / char.sizeof)];
+    auto decompressedDataSize =
+        LZ4_decompress_safe(cast(char*)compressedData.ptr, uncompressedData, compressedDataSize, uncompressedDataSize);
+    if (decompressedDataSize < 0) {
+        enforce(0, "A 0 or negative result from LZ4_decompress_safe indicates a failure tying to decompress the data.");
+    } else { 
+        logDebugf(
+            "We sucessfully decompressed some data! Uncompressed: %d, Compressed: %d\n",
+            decompressedDataSize,
+            compressedDataSize,
+        );
+    }
+    return cast(ubyte[])uncompressedData[0..(decompressedDataSize / char.sizeof)];
 }
 
 unittest {
