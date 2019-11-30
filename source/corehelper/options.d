@@ -70,10 +70,10 @@ struct Options
     long timestamp;
 
     /// Convert a `Options` to a `Coredump`
-    Coredump toCoredump() {
+    Coredump toCoredump(in Compression c) {
         // The kernel sends `!` instead of `/`: http://man7.org/linux/man-pages/man5/core.5.html
         auto slashPath = this.exePath.replace("!", "/");
         SysTime dTime = unixTimeToStdTime(this.timestamp);
-        return new Coredump(this.uid, this.gid, this.pid, this.signal, dTime, this.exe, slashPath);
+        return new Coredump(this.uid, this.gid, this.pid, this.signal, dTime, this.exe, slashPath, c);
     }
 }

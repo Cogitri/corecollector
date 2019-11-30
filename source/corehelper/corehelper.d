@@ -44,12 +44,12 @@ class CoreHelper {
     this(immutable Configuration config, immutable Options opt) {
         this.config = config;
         this.opt = opt;
-        this.coredump = this.opt.toCoredump;
+        this.coredump = this.opt.toCoredump(config.compression.to!Compression);
     }
 
     /// Write the coredump to the `CoredumpDir`
     int writeCoredump() {
-        auto coredumpDir = new CoredumpDir(this.config.targetPath, this.config.compression.capitalize().to!Compression);
+        auto coredumpDir = new CoredumpDir(this.config.targetPath);
         try {
             coredumpDir.addCoredump(this.coredump);
             coredumpDir.writeConfig();

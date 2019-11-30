@@ -19,6 +19,8 @@
 
 module corecollector.coredump;
 
+import corecollector.lz4;
+
 import hunt.logging;
 static import hunt.serialization.JsonSerializer;
 
@@ -31,7 +33,12 @@ import std.outbuffer;
 import std.path;
 import std.stdio;
 import std.uuid;
-import std.zlib;
+
+/// How the coredump is compressed
+enum Compression {
+    None,
+    Lz4,
+}
 
 /// A class describing a single coredump
 class Coredump {
@@ -49,8 +56,12 @@ class Coredump {
     string exePath;
     /// The UNIX timestamp at which the program crashed
     SysTime timestamp;
+    /// The uncompressed size of this coredump, required for decompression
+    uint uncompressedSize;
     /// The name under which we're going to save the coredump
     private string filename;
+    /// How this coredump is compressed
+    private Compression compression;
 
     /// ctor to construct a `Coredump`
     this(
@@ -61,6 +72,7 @@ class Coredump {
         const SysTime timestamp,
         const string exe,
         const string exePath,
+        const Compression compression,
         )
         {
             this.uid = uid;
@@ -70,6 +82,7 @@ class Coredump {
             this.exe = exe;
             this.exePath = exePath;
             this.timestamp = timestamp;
+            this.compression = compression;
         }
 
     /// ctor to construct a `Coredump` from a JSON value
@@ -84,6 +97,7 @@ class Coredump {
             SysTime(json["timestamp"].integer),
             json["exe"].str,
             json["exePath"].str,
+            cast(Compression)json["compression"].integer,
         );
 
         core.filename = generateCoredumpName();
@@ -92,26 +106,31 @@ class Coredump {
     /// Generate a unique filename for a coredump.
     const final string generateCoredumpName()
     {
+        string compression;
+
+        switch(this.compression) with (Compression) {
+            case Lz4:
+                compression = ".lz4";
+                break;
+            default:
+                break;
+        }
+
         auto filename =  this.exe ~ "-"
             ~ this.sig.to!string ~ "-"
             ~ this.pid.to!string ~ "-"
             ~ this.uid.to!string ~ "-"
             ~ this.gid.to!string ~ "-"
-            ~ this.timestamp.toISOString;
+            ~ this.timestamp.toISOString
+            ~ compression;
         auto filenameFinal = filename ~ sha1UUID(filename).to!string;
         logDebugf("Generated filename for coredump %s: %s", this, filenameFinal);
         return filenameFinal;
     }
 }
 
-enum Compression {
-    None,
-    Zlib,
-}
-
 /// The `CoredumpDir` holds information about all collected `Coredump`s
 class CoredumpDir {
-    private Compression compression = Compression.None;
     /// All known `Coredump`s
     Coredump[] coredumps;
     private string targetPath;
@@ -122,11 +141,6 @@ class CoredumpDir {
         coredumps = new Coredump[0];
     }
 
-    this(Compression compression) {
-        this.compression = compression;
-        this();
-    }
-
     /// ctor to directly construct a `CoredumpDir` from a JSON value containing multiple `Coredump`s.
     this(const JSONValue json) {
         logDebugf("Constructing CoredumpDir from JSON %s", json);
@@ -134,12 +148,6 @@ class CoredumpDir {
             coredumps ~= new Coredump(x);
         }
     }
-
-    this(const JSONValue json, Compression compression) {
-        this.compression = compression;
-        this(json);
-    }
-
 
     /// ctor to construct a `CoredumpDir` from a `targetPath` in which a `coredumps.json` is contained
     this(const string targetPath) {
@@ -154,11 +162,6 @@ class CoredumpDir {
         this(coredump_json);
     }
 
-    this(const string targetPath, Compression compression) {
-        this.compression = compression;
-        this(targetPath);
-    }
-
     /// Add a `Coredump` to the `CoredumpDir` and write it from the stdin to its target location.
     void addCoredump(Coredump coredump) {
         logDebugf("Adding coredump '%s'", coredump);
@@ -171,17 +174,20 @@ class CoredumpDir {
 
         logDebugf("Writing coredump to path '%s'", coredumpPath);
 
-        switch(this.compression) with (Compression) {
+        switch(coredump.compression) with (Compression) {
             case None:
                 foreach (ubyte[] buffer; stdin.byChunk(new ubyte[4096])) {
                     target.rawWrite(buffer);
                 }
                 break;
-            case Zlib:
-                auto compressor = new Compress;
-                foreach (chunk; stdin.byChunk(new ubyte[4096]).map!(x => compressor.compress(x))) {
-                    target.rawWrite(chunk);
+            case Lz4:
+                ubyte[] uncompressedData;
+                foreach (ubyte[] buffer; stdin.byChunk(new ubyte[4096])) {
+                    uncompressedData ~= buffer;
                 }
+                coredump.uncompressedSize = cast(int)uncompressedData.length * cast(int)ubyte.sizeof;
+                const auto compressedData = compressData(uncompressedData);
+                target.rawWrite(compressedData);
                 break;
             default:
                 assert(0);
@@ -224,10 +230,10 @@ class CoredumpDir {
 unittest {
     import std.format : format;
 
-    auto core = new Coredump(1000, 1000, 14_948, 6, SysTime(1_574_450_085), "Xwayland", "/usr/bin/");
+    auto core = new Coredump(1000, 1000, 14_948, 6, SysTime(1_574_450_085), "Xwayland", "/usr/bin/", Compression.None);
 
     auto validString =
-        `{"exe":"Xwayland","exePath":"\/usr\/bin\/","filename":[],`
+        `{"compression":0,"exe":"Xwayland","exePath":"\/usr\/bin\/","filename":[],`
         ~ `"gid":1000,"pid":14948,"sig":6,"timestamp":1574450085,"uid":1000}`;
     auto validJSON = parseJSON(validString);
     auto generatedJSON = hunt.serialization.JsonSerializer.toJson(core);
@@ -245,15 +251,15 @@ unittest {
 unittest {
     import std.format : format;
 
-    auto core1 = new Coredump(1, 1, 1, 1, SysTime(1970), "test", "/usr/bin/");
-    auto core2 = new Coredump(1, 1, 1, 1, SysTime(1971), "test", "/usr/bin/");
+    auto core1 = new Coredump(1, 1, 1, 1, SysTime(1970), "test", "/usr/bin/", Compression.None);
+    auto core2 = new Coredump(1, 1, 1, 1, SysTime(1971), "test", "/usr/bin/", Compression.None);
     auto coredumpDir = new CoredumpDir();
     coredumpDir.coredumps ~= core1;
     coredumpDir.coredumps ~= core2;
 
-    auto validString = `{"compression":0,"configName":"coredumps.json","coredumps":`
-        ~ `[{"exe":"test","exePath":"\/usr\/bin\/","filename":[],"gid":1,"pid":1,"sig":1, "timestamp":1970,"uid":1},`
-        ~ `{"exe":"test","exePath":"\/usr\/bin\/","filename":[],"gid":1,"pid":1,"sig":1,"timestamp":1971,"uid":1}],`
+    auto validString = `{"configName":"coredumps.json","coredumps":`
+        ~ `[{"compression":0,"exe":"test","exePath":"\/usr\/bin\/","filename":[],"gid":1,"pid":1,"sig":1, "timestamp":1970,"uid":1},`
+        ~ `{"compression":0,"exe":"test","exePath":"\/usr\/bin\/","filename":[],"gid":1,"pid":1,"sig":1,"timestamp":1971,"uid":1}],`
         ~ `"targetPath":[]}`;
     auto validJSON = parseJSON(validString);
     auto generatedJSON = hunt.serialization.JsonSerializer.toJson(coredumpDir);

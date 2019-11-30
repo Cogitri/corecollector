@@ -19,8 +19,8 @@ extern (C) {
 }
 
 /// Compression
-ubyte[] compressData(const char[] uncompressedData) {
-    immutable int uncompressedDataSize = cast(int)uncompressedData.length * cast(int)char.sizeof;
+ubyte[] compressData(const ubyte[] uncompressedData) {
+    immutable int uncompressedDataSize = cast(int)uncompressedData.length * cast(int)ubyte.sizeof;
     immutable auto maxDstSize = LZ4_compressBound(uncompressedDataSize);
     char* compressedData = cast(char*)malloc(maxDstSize);
 
@@ -31,7 +31,7 @@ ubyte[] compressData(const char[] uncompressedData) {
     if (compressedData == null)
         assert(0, "Failed to allocate memory for *compressedData.");
     const auto compressedDataSize =
-        LZ4_compress_default(uncompressedData.ptr, compressedData, uncompressedDataSize, maxDstSize);
+        LZ4_compress_default(cast(char*)uncompressedData.ptr, compressedData, uncompressedDataSize, maxDstSize);
     if (compressedDataSize <= 0) {
         assert(0, "A 0 or negative result from LZ4_compress_default indicates a failure trying to compress the data.");
     } else {
@@ -47,11 +47,11 @@ ubyte[] compressData(const char[] uncompressedData) {
 }
 
 /// Decompression
-ubyte[] decompressData(const char[] compressedData, uint uncompressedDataSize) {
+ubyte[] decompressData(const ubyte[] compressedData, uint uncompressedDataSize) {
     immutable auto compressedDataSize = cast(int)compressedData.length * cast(int)char.sizeof;
 
     auto uncompressedData = cast(char*)malloc(uncompressedDataSize);
-    LZ4_decompress_safe(compressedData.ptr, uncompressedData, compressedDataSize, uncompressedDataSize);
+    LZ4_decompress_safe(cast(char*)compressedData.ptr, uncompressedData, compressedDataSize, uncompressedDataSize);
     return cast(ubyte[])uncompressedData[0..(uncompressedDataSize / char.sizeof)];
 }
 
@@ -61,7 +61,7 @@ unittest {
     const char[] testString =
         "11111111111111111111111111111111112222222222222221111111111111111110000000000000011111111111111111111";
 
-    const auto compressedString = compressData(testString);
+    const auto compressedString = compressData(cast(ubyte[])testString);
     const ubyte[] expectedCompressedVal =
         [31, 49, 1, 0, 14, 26, 50, 1, 0, 14, 48, 0, 25, 48, 1, 0, 11, 32, 0, 80, 49, 49, 49, 49, 49];
     assert(
@@ -70,7 +70,7 @@ unittest {
     );
 
     const auto uncompressedDataSize = cast(int)testString.length * cast(int)char.sizeof;
-    const auto reDecompressedString = cast(char[])decompressData(cast(char[])compressedString, uncompressedDataSize);
+    const auto reDecompressedString = cast(char[])decompressData(compressedString, uncompressedDataSize);
     assert(
         testString == reDecompressedString,
         format("Expected %s, got %s", testString, reDecompressedString),

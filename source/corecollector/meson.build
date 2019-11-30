@@ -14,6 +14,7 @@ lib_src = [
 core_lib = library(
     'corecollector',
     lib_src,
+    include_directories: src_inc,
     dependencies: [lz4_dep, hunt_dep],
     install: true,
     version: meson.project_version(),
@@ -39,6 +40,7 @@ pkgc.generate(
 core_lib_test_exe = executable(
     'core-lib-text-exe',
     [lib_src, 'tests/main.d'],
+    include_directories: src_inc,
     dependencies: [lz4_dep, hunt_dep],
     d_unittest: true,
     link_args: '-link-defaultlib-shared',
