@@ -114,9 +114,16 @@ class CoreCtl {
         );
     }
 
+    /// Check if the coredump is compressed. If so, return true.
+    bool CoredumpisCompressed(uint coreNum) {
+        return coredumpDir.coredumps[coreNum].compression != Compression.None;
+    }
+
     /// Dump coredump `coreNum` to `targetPath`
     void dumpCore(uint coreNum, string targetPath) {
         File targetFile;
+
+        logDebugf("Dumping core %d", coreNum);
 
         switch(targetPath) {
             case "":
@@ -128,11 +135,16 @@ class CoreCtl {
                 break;
         }
 
+        if (CoredumpisCompressed(coreNum)) {
+            logDebug("Coredump is compressed, decompressing...");
+            auto uncompressedData = this.coredumpDir.coredumps[coreNum].decompress(getCorePath(coreNum));
+            targetFile.rawWrite(uncompressedData);
+        } else {
+            auto sourceFile = File(getCorePath(coreNum), "r");
 
-        auto sourceFile = File(getCorePath(coreNum), "r");
-
-        foreach (ubyte[] buffer; sourceFile.byChunk(new ubyte[4096])) {
-            targetFile.rawWrite(buffer);
+            foreach (ubyte[] buffer; sourceFile.byChunk(new ubyte[4096])) {
+                targetFile.rawWrite(buffer);
+            }
         }
     }
 

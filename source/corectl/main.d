@@ -78,19 +78,21 @@ int main(string[] args)
         }
     }
 
+    logDebug("Constructing CoreCtl object");
     auto coreCtl = new CoreCtl(cast(immutable) coreDir);
 
+    logDebugf("Determining command to run for requested mode %s", options.mode);
     switch (options.mode) {
         case "list":
             coreCtl.listCoredumps();
             break;
         case "debug":
-            coreCtl.debugCore(options.id);
+            coreCtl.debugCore(options.id - 1);
             break;
         case "info":
             break;
         case "dump":
-            coreCtl.dumpCore(options.id, options.file);
+            coreCtl.dumpCore(options.id - 1, options.file);
             break;
         default:
             criticalf("Unknown operation %s\n", options.mode);

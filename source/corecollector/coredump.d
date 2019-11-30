@@ -58,10 +58,10 @@ class Coredump {
     SysTime timestamp;
     /// The uncompressed size of this coredump, required for decompression
     uint uncompressedSize;
+    /// How this coredump is compressed
+    Compression compression;
     /// The name under which we're going to save the coredump
     private string filename;
-    /// How this coredump is compressed
-    private Compression compression;
 
     /// ctor to construct a `Coredump`
     this(
@@ -104,7 +104,7 @@ class Coredump {
     }
 
     /// Generate a unique filename for a coredump.
-    const final string generateCoredumpName()
+    final string generateCoredumpName() const
     {
         string compression;
 
@@ -121,11 +121,30 @@ class Coredump {
             ~ this.pid.to!string ~ "-"
             ~ this.uid.to!string ~ "-"
             ~ this.gid.to!string ~ "-"
-            ~ this.timestamp.toISOString
-            ~ compression;
-        auto filenameFinal = filename ~ sha1UUID(filename).to!string;
+            ~ this.timestamp.toISOString;
+        const auto filenameFinal = filename ~ sha1UUID(filename).to!string ~ compression;
         logDebugf("Generated filename for coredump %s: %s", this, filenameFinal);
         return filenameFinal;
+    }
+
+    /// Decompress this coredump. Throws if coredump isn't compressed (so check this.compression up front)
+    ubyte[] decompress(string corePath) const {
+        ubyte[] ret;
+        auto coreFile = File(corePath, "r");
+
+        switch (this.compression) with (Compression) {
+            case Lz4:
+                ubyte[] compressedData;
+                foreach (ubyte[] buffer; coreFile.byChunk(new ubyte[4096])) {
+                    compressedData ~= buffer;
+                }
+                ret = decompressData(cast(const)compressedData, this.uncompressedSize);
+                break;
+            default:
+                assert(0, "Can't decompress coredump that isn't compressed!");
+        }
+
+        return ret;
     }
 }
 
