@@ -3,6 +3,7 @@ module corecollector.lz4;
 import hunt.logging;
 
 import core.stdc.stdlib;
+import std.algorithm;
 import std.exception;
 import std.format;
 import std.stdio;
@@ -25,19 +26,21 @@ ubyte[] compressData(in ubyte[] uncompressedData) {
     immutable auto maxDstSize = LZ4_compressBound(uncompressedDataSize);
     char* compressedData = cast(char*)malloc(maxDstSize);
 
-    if(!compressedData) {
+    if (!compressedData) {
         assert(0, "Out of memory!");
     }
 
-    if (compressedData == null)
+    if (compressedData == null) {
         assert(0, "Failed to allocate memory for *compressedData.");
+    }
+    logDebugf("Trying to compress data: '%s'", cast(char[])uncompressedData);
     const auto compressedDataSize =
         LZ4_compress_default(cast(char*)uncompressedData.ptr, compressedData, uncompressedDataSize, maxDstSize);
     if (compressedDataSize <= 0) {
         enforce(0, "A 0 or negative result from LZ4_compress_default indicates a failure trying to compress the data.");
     } else {
         logDebugf(
-            "We successfully compressed some data! Compressed: %d, Uncompressed %d\nCompressed data: %s",
+            "We successfully compressed some data! Compressed: %d, Uncompressed %d\nCompressed data: '%s'",
             compressedDataSize,
             uncompressedDataSize,
             compressedData[0 .. (compressedDataSize / char.sizeof)],
@@ -54,7 +57,7 @@ ubyte[] compressData(in ubyte[] uncompressedData) {
 ubyte[] decompressData(in ubyte[] compressedData, in uint uncompressedDataSize) {
     immutable auto compressedDataSize = cast(int)compressedData.length * cast(int)char.sizeof;
 
-    logDebugf("Trying to decompress data %s", cast(char[])compressedData);
+    logDebugf("Trying to decompress data '%s'\n", cast(char[])compressedData);
 
     auto uncompressedData = cast(char*)malloc(uncompressedDataSize);
     auto decompressedDataSize =
@@ -84,6 +87,7 @@ unittest {
         expectedCompressedVal == compressedString,
         format("Expected %s, got %s", expectedCompressedVal, compressedString),
     );
+    assert(0);
 
     const auto uncompressedDataSize = cast(int)testString.length * cast(int)char.sizeof;
     const auto reDecompressedString = cast(char[])decompressData(compressedString, uncompressedDataSize);

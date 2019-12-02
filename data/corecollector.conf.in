@@ -1,5 +1,5 @@
 # What compression to use for coredumps.
-# Available choices: none| zlib
+# Available choices: none | lz4
 compression = none
 # The maximum size of coredumps.
 # Unset or set to 0 to set no size limit.
