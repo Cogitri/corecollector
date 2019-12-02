@@ -34,16 +34,16 @@ import std.stdio;
 /// Class holding the logic of the `corectl` executable.
 class CoreCtl {
     /// The `CoredumpDir` holding existing coredumps.
-    immutable CoredumpDir coredumpDir;
+    const CoredumpDir coredumpDir;
 
     /// ctor to construct with an existing `CoredumpDir`.
-    this(immutable CoredumpDir coreDir) {
+    this(in CoredumpDir coreDir) {
         this.coredumpDir = coreDir;
         this.ensureCorrectSysctl();
     }
 
     /// Make sure that `corehelper` is set as the kernel's corecollector server
-    void ensureCorrectSysctl() {
+    void ensureCorrectSysctl() const {
         string sysctlVal = readText("/proc/sys/kernel/core_pattern");
 
         string expectedVal = "'|"
@@ -62,7 +62,7 @@ class CoreCtl {
     }
 
     /// Write all available coredumps to the stdout
-    void listCoredumps() {
+    void listCoredumps() const {
         writeln("ID\tExecutable\tPath\t\tSignal\tUID\tGID\tPID\tTimestamp");
         int i;
         foreach(x; this.coredumpDir.coredumps)
@@ -83,7 +83,7 @@ class CoreCtl {
     }
 
     /// Return path to the coredump
-    string getCorePath(uint coreNum) {
+    string getCorePath(in uint coreNum) const {
         return buildPath(
             coredumpDir.getTargetPath(),
             coredumpDir.coredumps[coreNum].generateCoredumpName(),
@@ -91,7 +91,7 @@ class CoreCtl {
     }
 
     /// Return path to the executable
-    string getExePath(uint coreNum) {
+    string getExePath(in uint coreNum) const {
         return buildPath(
             coredumpDir.coredumps[coreNum].exePath,
             coredumpDir.coredumps[coreNum].exe,
@@ -99,7 +99,7 @@ class CoreCtl {
     }
 
     /// Dump coredump `coreNum` to `targetPath`
-    void dumpCore(uint coreNum, string targetPath) {
+    void dumpCore(in uint coreNum, in string targetPath) const {
         File targetFile;
 
         switch(targetPath) {
@@ -121,7 +121,7 @@ class CoreCtl {
     }
 
     /// Open coredump `coreNum` in debugger
-    void debugCore(uint coreNum) {
+    void debugCore(in uint coreNum) const {
         auto corePath = getCorePath(coreNum);
         auto exePath = getExePath(coreNum);
         auto debuggerPid = spawnProcess(["gdb", exePath, corePath]);

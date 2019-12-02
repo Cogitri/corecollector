@@ -52,14 +52,14 @@ class Coredump {
 
     /// ctor to construct a `Coredump`
     this(
-        const long uid,
-        const long gid,
-        const long pid,
-        const long sig,
-        const SysTime timestamp,
-        const string exe,
-        const string exePath,
-        )
+        in long uid,
+        in long gid,
+        in long pid,
+        in long sig,
+        in SysTime timestamp,
+        in string exe,
+        in string exePath,
+        ) pure nothrow
         {
             this.uid = uid;
             this.pid = pid;
@@ -71,7 +71,7 @@ class Coredump {
         }
 
     /// ctor to construct a `Coredump` from a JSON value
-    this(const JSONValue json)
+    this(in JSONValue json)
     {
         logDebugf("Constructing Coredump from JSON: %s", json);
         auto core = this(
@@ -88,7 +88,7 @@ class Coredump {
     }
 
     /// Generate a unique filename for a coredump.
-    const final string generateCoredumpName()
+    final string generateCoredumpName() const
     {
         auto filename =  this.exe ~ "-"
             ~ this.sig.to!string ~ "-"
@@ -115,7 +115,7 @@ class CoredumpDir {
     }
 
     /// ctor to directly construct a `CoredumpDir` from a JSON value containing multiple `Coredump`s.
-    this(const JSONValue json) {
+    this(in JSONValue json) {
         logDebugf("Constructing CoredumpDir from JSON %s", json);
         foreach(x; json["coredumps"].array) {
             coredumps ~= new Coredump(x);
@@ -123,7 +123,7 @@ class CoredumpDir {
     }
 
     /// ctor to construct a `CoredumpDir` from a `targetPath` in which a `coredumps.json` is contained
-    this(const string targetPath) {
+    this(in string targetPath) {
         this.targetPath = targetPath;
         auto configPath = buildPath(targetPath, this.configName);
         this.ensureDir(configPath);
@@ -153,7 +153,7 @@ class CoredumpDir {
     }
 
     /// Make sure the `CoredumpDir` exists already and if it doesn't put a default, empty config in there.
-    private void ensureDir(const string configPath) {
+    private void ensureDir(in string configPath) const {
         if (!configPath.exists) {
             infof("Config path '%s' doesn't exist, creating it and writing default config to it...", configPath);
             if(!this.targetPath.exists) {
@@ -166,12 +166,12 @@ class CoredumpDir {
     }
 
     /// Write the configuration file of the `CoredumpDir` to the `configPath`.
-    void writeConfig() {
+    void writeConfig() const {
         auto coredump_json = hunt.serialization.JsonSerializer.toJson(this).toString();
         writeConfig(coredump_json);
     }
 
-    private void writeConfig(const string JSONConfig) {
+    private void writeConfig(in string JSONConfig) const {
         auto path = buildPath(targetPath, configName);
         logDebugf("Writing CoredumpDir config '%s' to path '%s'", JSONConfig, path);
         auto configFile = File(path, "w");
@@ -180,7 +180,7 @@ class CoredumpDir {
         configFile.write(buf.toString());
     }
 
-    const string getTargetPath() {
+    string getTargetPath() const pure nothrow @safe {
         return this.targetPath;
     }
 }
