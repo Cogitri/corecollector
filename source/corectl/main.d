@@ -67,15 +67,10 @@ int main(string[] args)
 
     try {
         logDebugf("Opening CoredumpDir at path %s", conf.targetPath);
-        coreDir = new CoredumpDir(conf.targetPath);
-    } catch (ErrnoException e) with (core.stdc.errno) {
-        switch(e.errno) {
-            case EACCES:
-                writeln("No coredumps collected yet.");
-                return 0;
-            default:
-                throw e;
-        }
+        coreDir = new CoredumpDir(conf.targetPath, true);
+    } catch (NoCoredumpDir) {
+        writeln("No coredumps collected yet.");
+        return 0;
     }
 
     auto coreCtl = new CoreCtl(cast(immutable) coreDir);

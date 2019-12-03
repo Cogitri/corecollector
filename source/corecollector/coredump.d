@@ -102,6 +102,14 @@ class Coredump {
     }
 }
 
+/// Exception thrown if there's no CoredumpDir created yet and we're not in readOnly mode.
+class NoCoredumpDir : Exception
+{
+    this(string msg, string file = __FILE__, size_t line = __LINE__) {
+        super(msg, file, line);
+    }
+}
+
 /// The `CoredumpDir` holds information about all collected `Coredump`s
 class CoredumpDir {
     /// All known `Coredump`s
@@ -109,9 +117,11 @@ class CoredumpDir {
     private string targetPath;
     /// The name of the configuration file in which data about the coredumps is saved.
     immutable configName = "coredumps.json";
+    /// Wheter we want to do changes to the coredumpDir (corehelper) or not (corectl).
+    immutable bool readOnly = false;
 
     private this() {
-        coredumps = new Coredump[0];
+        this.coredumps = new Coredump[0];
     }
 
     /// ctor to directly construct a `CoredumpDir` from a JSON value containing multiple `Coredump`s.
@@ -123,7 +133,8 @@ class CoredumpDir {
     }
 
     /// ctor to construct a `CoredumpDir` from a `targetPath` in which a `coredumps.json` is contained
-    this(in string targetPath) {
+    this(in string targetPath, bool readOnly) {
+        this.readOnly = readOnly;
         this.targetPath = targetPath;
         auto configPath = buildPath(targetPath, this.configName);
         this.ensureDir(configPath);
@@ -155,6 +166,9 @@ class CoredumpDir {
     /// Make sure the `CoredumpDir` exists already and if it doesn't put a default, empty config in there.
     private void ensureDir(in string configPath) const {
         if (!configPath.exists) {
+            if (this.readOnly) {
+                throw new NoCoredumpDir("Can't create new directory in read-only mode!");
+            }
             infof("Config path '%s' doesn't exist, creating it and writing default config to it...", configPath);
             if(!this.targetPath.exists) {
                 this.targetPath.mkdir;

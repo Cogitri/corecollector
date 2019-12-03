@@ -47,7 +47,7 @@ class CoreHelper {
 
     /// Write the coredump to the `CoredumpDir`
     int writeCoredump() {
-        auto coredumpDir = new CoredumpDir(this.config.targetPath);
+        auto coredumpDir = new CoredumpDir(this.config.targetPath, false);
         try {
             coredumpDir.addCoredump(this.coredump);
             coredumpDir.writeConfig();
