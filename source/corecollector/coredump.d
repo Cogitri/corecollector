@@ -20,8 +20,9 @@
 module corecollector.coredump;
 
 import hunt.logging;
-static import hunt.serialization.JsonSerializer;
 
+import std.algorithm;
+import std.array;
 import std.conv;
 import std.datetime;
 import std.file;
@@ -74,12 +75,14 @@ class Coredump {
     this(in JSONValue json)
     {
         logDebugf("Constructing Coredump from JSON: %s", json);
+
+        SysTime time = std.datetime.SysTime.fromISOString(json["timestamp"].str);
         auto core = this(
             json["uid"].integer,
             json["gid"].integer,
             json["pid"].integer,
             json["sig"].integer,
-            SysTime(json["timestamp"].integer),
+            time,
             json["exe"].str,
             json["exePath"].str,
         );
@@ -99,6 +102,20 @@ class Coredump {
         auto filenameFinal = filename ~ sha1UUID(filename).to!string;
         logDebugf("Generated filename for coredump %s: %s", this, filenameFinal);
         return filenameFinal;
+    }
+
+    /// Convert the `Coredump` to a `JSONValue`
+    JSONValue toJson() const {
+        return JSONValue([
+            "exe": JSONValue(this.exe),
+            "exePath": JSONValue(this.exePath),
+            "filename": JSONValue(this.filename),
+            "gid": JSONValue(this.gid),
+            "pid": JSONValue(this.pid),
+            "sig": JSONValue(this.sig),
+            "timestamp": JSONValue(this.timestamp.toISOString),
+            "uid": JSONValue(this.uid),
+            ]);
     }
 }
 
@@ -146,6 +163,13 @@ class CoredumpDir {
         this(coredump_json);
     }
 
+    /// Convert the `CoredumpDir` to a `JSONValue`
+    JSONValue toJson() const {
+        return JSONValue([
+            "coredumps": JSONValue(this.coredumps.map!(p => p.toJson).array),
+        ]);
+    }
+
     /// Add a `Coredump` to the `CoredumpDir` and write it from the stdin to its target location.
     void addCoredump(Coredump coredump) {
         logDebugf("Adding coredump '%s'", coredump);
@@ -181,8 +205,8 @@ class CoredumpDir {
 
     /// Write the configuration file of the `CoredumpDir` to the `configPath`.
     void writeConfig() const {
-        auto coredump_json = hunt.serialization.JsonSerializer.toJson(this).toString();
-        writeConfig(coredump_json);
+        auto coredumpJson = this.toJson().toString();
+        writeConfig(coredumpJson);
     }
 
     private void writeConfig(in string JSONConfig) const {
@@ -205,10 +229,10 @@ unittest {
     auto core = new Coredump(1000, 1000, 14_948, 6, SysTime(1_574_450_085), "Xwayland", "/usr/bin/");
 
     auto validString =
-        `{"exe":"Xwayland","exePath":"\/usr\/bin\/","filename":[],`
-        ~ `"gid":1000,"pid":14948,"sig":6,"timestamp":1574450085,"uid":1000}`;
+        `{"exe":"Xwayland","exePath":"\/usr\/bin\/","filename":"",`
+        ~ `"gid":1000,"pid":14948,"sig":6,"timestamp":"00010101T005605.4450085","uid":1000}`;
     auto validJSON = parseJSON(validString);
-    auto generatedJSON = hunt.serialization.JsonSerializer.toJson(core);
+    auto generatedJSON = core.toJson();
     assert(generatedJSON == validJSON, format("Expected %s, got %s", validJSON, generatedJSON));
 
     auto parsedCore = new Coredump(generatedJSON);
@@ -229,12 +253,11 @@ unittest {
     coredumpDir.coredumps ~= core1;
     coredumpDir.coredumps ~= core2;
 
-    auto validString = `{"configName":"coredumps.json","coredumps":`
-        ~ `[{"exe":"test","exePath":"\/usr\/bin\/","filename":[],"gid":1,"pid":1,"sig":1, "timestamp":1970,"uid":1},`
-        ~ `{"exe":"test","exePath":"\/usr\/bin\/","filename":[],"gid":1,"pid":1,"sig":1,"timestamp":1971,"uid":1}],`
-        ~ `"targetPath":[]}`;
+    auto validString = `{"coredumps":`
+        ~ `[{"exe":"test","exePath":"\/usr\/bin\/","filename":"","gid":1,"pid":1,"sig":1, "timestamp":"00010101T005328.000197","uid":1},`
+        ~ `{"exe":"test","exePath":"\/usr\/bin\/","filename":"","gid":1,"pid":1,"sig":1,"timestamp":"00010101T005328.0001971","uid":1}]}`;
     auto validJSON = parseJSON(validString);
-    auto generatedJSON = hunt.serialization.JsonSerializer.toJson(coredumpDir);
+    auto generatedJSON = coredumpDir.toJson();
     assert(generatedJSON == validJSON, format("Expected %s, got %s", validJSON, generatedJSON));
 
     auto coredumpDirParsed = new CoredumpDir(generatedJSON);
