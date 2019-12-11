@@ -23,6 +23,7 @@ import corecollector.coredump;
 
 import hunt.logging;
 
+import std.conv;
 import std.exception;
 import std.datetime;
 import std.file;
@@ -30,6 +31,7 @@ import std.format;
 import std.path;
 import std.process;
 import std.stdio;
+import std.string;
 
 /// Class holding the logic of the `corectl` executable.
 class CoreCtl {
@@ -62,22 +64,36 @@ class CoreCtl {
     }
 
     /// Write all available coredumps to the stdout
-    void listCoredumps() const {
-        writeln("ID\tExecutable\tPath\t\tSignal\tUID\tGID\tPID\tTimestamp");
+    void listCoredumps() {
+        // All of these are the maximum length of the Data + the length of the string describing them (e.g. "ID", "SIGNAL")
+        immutable auto maxIdLength = this.coredumpDir.coredumps.length.to!string.length + 2;
+        immutable auto signalLength = 8;
+        immutable auto allIDlength = 8;
+        immutable auto timestampLength = 21;
+
+        // No need to fill the last string up with spaces with leftJustify
+        writef(
+            "%s %s %s %s %s %s EXE\n",
+            leftJustify("ID", maxIdLength, ' '),
+            leftJustify("SIGNAL ", signalLength, ' '),
+            leftJustify("UID", allIDlength, ' '),
+            leftJustify("GID", allIDlength, ' '),
+            leftJustify("PID", allIDlength, ' '),
+            leftJustify("TIMESTAMP", timestampLength, ' '),
+        );
         int i;
         foreach(x; this.coredumpDir.coredumps)
         {
             i++;
             writef(
-                "%d\t%s\t\t%s\t%d\t%d\t%d\t%d\t%s\t\n",
-                i,
-                x.exe,
-                x.exePath,
-                x.sig,
-                x.uid,
-                x.gid,
-                x.pid,
-                x.timestamp.toSimpleString(),
+                "%s %s %s %s %s %s %s\n",
+                leftJustify(i.to!string, maxIdLength, ' '),
+                leftJustify(x.sig.to!string, signalLength, ' '),
+                leftJustify(x.uid.to!string, allIDlength, ' '),
+                leftJustify(x.gid.to!string, allIDlength, ' '),
+                leftJustify(x.pid.to!string, allIDlength, ' '),
+                leftJustify(x.timestamp.toSimpleString(), timestampLength, ' '),
+                buildPath(x.exePath, x.exe),
             );
         }
     }
@@ -102,6 +118,8 @@ class CoreCtl {
     void dumpCore(in uint coreNum, in string targetPath) const {
         File targetFile;
 
+        logDebugf("Dumping core %d", coreNum);
+
         switch(targetPath) {
             case "":
             case "stdout":
@@ -111,7 +129,6 @@ class CoreCtl {
                 targetFile = File(targetPath, "w");
                 break;
         }
-
 
         auto sourceFile = File(getCorePath(coreNum), "r");
 
