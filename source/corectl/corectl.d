@@ -23,6 +23,8 @@ import corecollector.coredump;
 
 import hunt.logging;
 
+import core.stdc.stdlib;
+
 import std.conv;
 import std.exception;
 import std.datetime;
@@ -32,6 +34,8 @@ import std.path;
 import std.process;
 import std.stdio;
 import std.string;
+
+immutable humansCountFromOne = 1;
 
 /// Class holding the logic of the `corectl` executable.
 class CoreCtl {
@@ -99,6 +103,16 @@ class CoreCtl {
         }
     }
 
+    /// Make sure the coredump exists. Starts counting from 0 being the first one.
+    bool ensureCoredump(in uint coreNum) const {
+        const auto len = coredumpDir.coredumps.length;
+        if (len == 0) {
+            return false;
+        } else {
+            return (coredumpDir.coredumps.length - 1) >= coreNum;
+        }
+    }
+
     /// Return path to the coredump
     string getCorePath(in uint coreNum) const {
         return buildPath(
@@ -117,6 +131,11 @@ class CoreCtl {
 
     /// Dump coredump `coreNum` to `targetPath`
     void dumpCore(in uint coreNum, in string targetPath) const {
+        if(!ensureCoredump(coreNum)) {
+            stderr.writefln("Coredump number %s doesn't exist!", coreNum + humansCountFromOne);
+            exit(1);
+        }
+
         File targetFile;
 
         logDebugf("Dumping core %d", coreNum);
@@ -140,6 +159,10 @@ class CoreCtl {
 
     /// Open coredump `coreNum` in debugger
     void debugCore(in uint coreNum) const {
+        if(!ensureCoredump(coreNum)) {
+            stderr.writefln("Coredump number %d doesn't exist!", coreNum + humansCountFromOne);
+            exit(1);
+        }
         auto corePath = getCorePath(coreNum);
         auto exePath = getExePath(coreNum);
         auto debuggerPid = spawnProcess(["gdb", exePath, corePath]);

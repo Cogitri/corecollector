@@ -23,6 +23,7 @@ import std.conv;
 import std.exception;
 import std.format;
 import std.getopt;
+import std.stdio;
 
 immutable helpText =
 "
@@ -80,9 +81,19 @@ class Options
                 break;
             case "dump":
                 if (args.length == 3) {
-                    this.id = args[2].to!uint - 1;
+                    this.id = args[2].to!uint;
+                    if (this.id == 0) {
+                        writeln("IDs start from 0!");
+                    } else {
+                        this.id -= 1;
+                    }
                 } else if (args.length == 4) {
-                    this.id = args[2].to!uint - 1;
+                    this.id = args[2].to!uint;
+                    if (this.id == 0) {
+                        writeln("IDs start from 0!");
+                    } else {
+                        this.id -= 1;
+                    }
                     this.file = args[3];
                 } else {
                     assert(0, "Expected either ID or ID and file to dump to for subcommand");
