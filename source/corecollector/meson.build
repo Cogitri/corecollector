@@ -1,23 +1,25 @@
-configuration_d = configure_file(
-    input: 'configuration.d',
-    output: 'configuration.d',
+globals_d = configure_file(
+    input: 'globals.d',
+    output: 'globals.d',
     configuration: conf,
 )
 
 lib_src = [
-    configuration_d,
+    'configuration.d',
     'coredump.d',
     'logging.d',
+    globals_d,
 ]
 
 core_lib = library(
     'corecollector',
     lib_src,
-    dependencies: hunt_dep,
+    dependencies: [hunt_dep],
     install: true,
     version: meson.project_version(),
     soversion: project_soversion,
     d_module_versions: d_mod_version,
+    include_directories: src_inc,
     link_args: ['-shared', '-link-defaultlib-shared'],
 )
 
@@ -39,6 +41,7 @@ core_lib_test_exe = executable(
     [lib_src, 'tests/main.d'],
     dependencies: hunt_dep,
     d_unittest: true,
+    include_directories: src_inc,
     link_args: '-link-defaultlib-shared',
 )
 

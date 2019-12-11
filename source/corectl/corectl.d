@@ -19,6 +19,7 @@
 
 module corectl.corectl;
 
+import corecollector.globals;
 import corecollector.coredump;
 
 import hunt.logging;
@@ -53,7 +54,7 @@ class CoreCtl {
         string sysctlVal = readText("/proc/sys/kernel/core_pattern");
 
         string expectedVal = "|"
-            ~ buildPath("@LIBEXECDIR@", "corehelper")
+            ~ buildPath(libexecDir, "corehelper")
             ~ " -e=%e -E=%E -p=%P -s=%s -t=%t -u=%u -g=%g\n";
 
         if (sysctlVal != expectedVal) {

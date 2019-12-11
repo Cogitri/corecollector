@@ -21,6 +21,7 @@ module corecollector.corecollector;
 
 import corecollector.configuration;
 import corecollector.coredump;
+import corecollector.globals;
 import corecollector.logging;
 import corectl.corectl;
 import corectl.options;
@@ -48,7 +49,7 @@ int main(string[] args)
         writeln(helpText);
         return 0;
     } else if (options.showVersion) {
-        writeln("@VERSION@");
+        writeln(corecollectorVersion);
         return 0;
     }
     startLogging(options.debugLevel);

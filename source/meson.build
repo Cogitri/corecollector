@@ -3,9 +3,9 @@ pkgc = import('pkgconfig')
 conf = configuration_data()
 
 conf.set('COREDUMP_PATH', varlib_dir)
-conf.set('CONF_PATH', sysconf_dir)
-conf.set('LIBEXECDIR', libexec_dir)
-conf.set('VERSION', corecollector_version)
+conf.set('CONFIG_PATH', sysconf_dir)
+conf.set('LIBEXEC_DIR', libexec_dir)
+conf.set('CORECOLLECTOR_VERSION', corecollector_version)
 
 subdir('corecollector')
 

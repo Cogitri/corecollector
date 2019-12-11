@@ -19,6 +19,8 @@
 
 module corecollector.coredump;
 
+import corecollector.globals;
+
 import hunt.logging;
 
 import std.algorithm;

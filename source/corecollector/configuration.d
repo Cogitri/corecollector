@@ -19,6 +19,8 @@
 
 module corecollector.configuration;
 
+import corecollector.globals;
+
 import hunt.logging;
 import hunt.util.Configuration;
 
@@ -28,7 +30,7 @@ import std.path;
 import std.stdio;
 
 /// Path to where the configuration file is located at
-immutable configPath = buildPath("@CONF_PATH@", "corecollector.conf");
+immutable configPath = buildPath(confPath, "corecollector.conf");
 
 /// The `Configuration` class, which holds the configuration options
 /// both corehelper and corectl need to know
@@ -44,7 +46,7 @@ class Configuration
 
     /// The path to place coredumps at
     @Value("targetPath")
-    string targetPath = "@COREDUMP_PATH@";
+    string targetPath = coredumpPath;
 
     /// Empty constructor used with hunt's `ConfigBuilder`
     private this() { }

@@ -1,15 +1,8 @@
-helper_d = configure_file(
-    input: 'main.d',
-    output: 'main.d',
-    configuration: conf,
-)
-
 helper_src = [
-    helper_d,
+    'main.d',
     'options.d',
     'corehelper.d',
 ]
-
 
 executable(
     'corehelper',
