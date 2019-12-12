@@ -99,7 +99,7 @@ class CoreCtl {
                 leftJustify(x.gid.to!string, allIDlength, ' '),
                 leftJustify(x.pid.to!string, allIDlength, ' '),
                 leftJustify(x.timestamp.toSimpleString(), timestampLength, ' '),
-                buildPath(x.exePath, x.exe),
+                x.exePath,
             );
         }
     }
@@ -126,7 +126,6 @@ class CoreCtl {
     string getExePath(in uint coreNum) const {
         return buildPath(
             coredumpDir.coredumps[coreNum].exePath,
-            coredumpDir.coredumps[coreNum].exe,
         );
     }
 
