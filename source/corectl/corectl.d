@@ -169,4 +169,18 @@ class CoreCtl {
         scope(exit)
             wait(debuggerPid);
     }
+
+    /// Print information about coredump `coreNum`
+    void infoCore(in uint coreNum) const {
+        if(!ensureCoredump(coreNum)) {
+            stderr.writefln("Coredump number %d doesn't exist!", coreNum + humansCountFromOne);
+            exit(1);
+        }
+        writefln(
+            "Info about coredump: %d\n" ~
+            "Coredump path:       %s",
+            coreNum + humansCountFromOne,
+            getCorePath(coreNum)
+        );
+    }
 }

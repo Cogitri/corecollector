@@ -84,6 +84,7 @@ int main(string[] args)
             coreCtl.debugCore(options.id);
             break;
         case "info":
+            coreCtl.infoCore(options.id);
             break;
         case "dump":
             coreCtl.dumpCore(options.id, options.file);
