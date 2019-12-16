@@ -49,11 +49,14 @@ class Configuration
     string targetPath = coredumpPath;
 
     /// Empty constructor used with hunt's `ConfigBuilder`
-    private this() { }
+    private this()
+    {
+    }
 
     /// Construct a `Configuration` by supplying the `configPath`. You might want
     /// to supply the `configPath` which is defined in this module.
-    this(string configPath) {
+    this(string configPath)
+    {
         auto path = relativePath(configPath, std.file.thisExePath.dirName);
         logDebugf("Loading configuration from relative path %s.", path);
         ConfigBuilder confManager = new ConfigBuilder(path);

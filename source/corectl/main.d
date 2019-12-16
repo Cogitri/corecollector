@@ -45,10 +45,13 @@ int main(string[] args)
 {
 
     auto options = new Options(args);
-    if (options.showHelp) {
+    if (options.showHelp)
+    {
         writeln(helpText);
         return 0;
-    } else if (options.showVersion) {
+    }
+    else if (options.showVersion)
+    {
         writeln(corecollectorVersion);
         return 0;
     }
@@ -56,66 +59,75 @@ int main(string[] args)
 
     Configuration conf;
 
-    try {
+    try
+    {
         logDebugf("Loading configuration from path %s", configPath);
         conf = new Configuration(configPath);
-    } catch (ConfigurationException e) {
+    }
+    catch (ConfigurationException e)
+    {
         criticalf("Couldn't read configuration at path %s due to error %s\n", configPath, e);
         return 1;
     }
 
     CoredumpDir coreDir;
 
-    try {
+    try
+    {
         logDebugf("Opening CoredumpDir at path %s", conf.targetPath);
         coreDir = new CoredumpDir(conf.targetPath, true);
-    } catch (NoCoredumpDir) {
+    }
+    catch (NoCoredumpDir)
+    {
         writeln("No coredumps collected yet.");
         return 0;
     }
 
     auto coreCtl = new CoreCtl(cast(immutable) coreDir);
 
-    switch (options.mode) {
-        case "list":
-            coreCtl.listCoredumps();
-            break;
-        case "debug":
-            coreCtl.debugCore(options.id);
-            break;
-        case "info":
-            coreCtl.infoCore(options.id);
-            break;
-        case "dump":
-            coreCtl.dumpCore(options.id, options.file);
-            break;
-        default:
-            criticalf("Unknown operation %s\n", options.mode);
-            return 1;
+    switch (options.mode)
+    {
+    case "list":
+        coreCtl.listCoredumps();
+        break;
+    case "debug":
+        coreCtl.debugCore(options.id);
+        break;
+    case "info":
+        coreCtl.infoCore(options.id);
+        break;
+    case "dump":
+        coreCtl.dumpCore(options.id, options.file);
+        break;
+    default:
+        criticalf("Unknown operation %s\n", options.mode);
+        return 1;
     }
 
     return 0;
 }
 
 /// Setup logging for this moduke, depending on user input
-private void startLogging(int debugLevel) {
+private void startLogging(int debugLevel)
+{
     LogLevel logLevel;
 
-    switch(debugLevel) with (LogLevel) {
-        case -1:
-            logLevel = LOG_ERROR;
-            break;
-        case 0:
-            logLevel = LOG_WARNING;
-            break;
-        case 1:
-            logLevel = LOG_INFO;
-            break;
-        case 2:
-            logLevel = LOG_DEBUG;
-            break;
-        default:
-            assert(0, format("Invalid loglevel '%s'", debugLevel));
+    switch (debugLevel) with (LogLevel)
+    {
+    case -1:
+        logLevel = LOG_ERROR;
+        break;
+    case 0:
+        logLevel = LOG_WARNING;
+        break;
+    case 1:
+        logLevel = LOG_INFO;
+        break;
+    case 2:
+        logLevel = LOG_DEBUG;
+        break;
+    default:
+        assert(0, format("Invalid loglevel '%s'", debugLevel));
     }
 
     setupLogging(logLevel);

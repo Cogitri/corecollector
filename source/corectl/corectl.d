@@ -39,38 +39,38 @@ import std.string;
 immutable humansCountFromOne = 1;
 
 /// Class holding the logic of the `corectl` executable.
-class CoreCtl {
+class CoreCtl
+{
     /// The `CoredumpDir` holding existing coredumps.
     const CoredumpDir coredumpDir;
 
     /// ctor to construct with an existing `CoredumpDir`.
-    this(in CoredumpDir coreDir) {
+    this(in CoredumpDir coreDir)
+    {
         this.coredumpDir = coreDir;
         this.ensureCorrectSysctl();
     }
 
     /// Make sure that `corehelper` is set as the kernel's corecollector server
-    void ensureCorrectSysctl() const {
+    void ensureCorrectSysctl() const
+    {
         string sysctlVal = readText("/proc/sys/kernel/core_pattern");
 
-        string expectedVal = "|"
-            ~ buildPath(libexecDir, "corehelper")
-            ~ " -e=%e -E=%E -p=%P -s=%s -t=%t -u=%u -g=%g\n";
+        string expectedVal = "|" ~ buildPath(libexecDir,
+                "corehelper") ~ " -e=%e -E=%E -p=%P -s=%s -t=%t -u=%u -g=%g\n";
 
-        if (sysctlVal != expectedVal) {
-            errorf(
-                "The sysctl value for 'kernel.core_pattern' is wrong!
+        if (sysctlVal != expectedVal)
+        {
+            errorf("The sysctl value for 'kernel.core_pattern' is wrong!
                 As such corehelper won't receive any coredumps from the kernel.
                 Expected: '%s'
-                Got:      '%s'",
-                expectedVal,
-                sysctlVal,
-            );
+                Got:      '%s'", expectedVal, sysctlVal);
         }
     }
 
     /// Write all available coredumps to the stdout
-    void listCoredumps() {
+    void listCoredumps()
+    {
         // All of these are the maximum length of the Data + the length of the string describing them (e.g. "ID", "SIGNAL")
         immutable auto maxIdLength = this.coredumpDir.coredumps.length.to!string.length + 2;
         immutable auto signalLength = 8;
@@ -78,60 +78,54 @@ class CoreCtl {
         immutable auto timestampLength = 21;
 
         // No need to fill the last string up with spaces with leftJustify
-        writef(
-            "%s %s %s %s %s %s EXE\n",
-            leftJustify("ID", maxIdLength, ' '),
-            leftJustify("SIGNAL ", signalLength, ' '),
-            leftJustify("UID", allIDlength, ' '),
-            leftJustify("GID", allIDlength, ' '),
-            leftJustify("PID", allIDlength, ' '),
-            leftJustify("TIMESTAMP", timestampLength, ' '),
-        );
+        writef("%s %s %s %s %s %s EXE\n", leftJustify("ID", maxIdLength, ' '), leftJustify("SIGNAL ",
+                signalLength, ' '), leftJustify("UID", allIDlength, ' '), leftJustify("GID", allIDlength, ' '),
+                leftJustify("PID", allIDlength, ' '), leftJustify("TIMESTAMP",
+                    timestampLength, ' '));
         int i;
-        foreach(x; this.coredumpDir.coredumps)
+        foreach (x; this.coredumpDir.coredumps)
         {
             i++;
-            writef(
-                "%s %s %s %s %s %s %s\n",
-                leftJustify(i.to!string, maxIdLength, ' '),
-                leftJustify(x.sig.to!string, signalLength, ' '),
-                leftJustify(x.uid.to!string, allIDlength, ' '),
-                leftJustify(x.gid.to!string, allIDlength, ' '),
-                leftJustify(x.pid.to!string, allIDlength, ' '),
-                leftJustify(x.timestamp.toSimpleString(), timestampLength, ' '),
-                x.exePath,
-            );
+            writef("%s %s %s %s %s %s %s\n", leftJustify(i.to!string, maxIdLength,
+                    ' '), leftJustify(x.sig.to!string, signalLength, ' '),
+                    leftJustify(x.uid.to!string, allIDlength, ' '), leftJustify(x.gid.to!string, allIDlength, ' '),
+                    leftJustify(x.pid.to!string, allIDlength, ' '),
+                    leftJustify(x.timestamp.toSimpleString(), timestampLength, ' '), x.exePath);
         }
     }
 
     /// Make sure the coredump exists. Starts counting from 0 being the first one.
-    bool ensureCoredump(in uint coreNum) const {
+    bool ensureCoredump(in uint coreNum) const
+    {
         const auto len = coredumpDir.coredumps.length;
-        if (len == 0) {
+        if (len == 0)
+        {
             return false;
-        } else {
+        }
+        else
+        {
             return (coredumpDir.coredumps.length - 1) >= coreNum;
         }
     }
 
     /// Return path to the coredump
-    string getCorePath(in uint coreNum) const {
-        return buildPath(
-            coredumpDir.getTargetPath(),
-            coredumpDir.coredumps[coreNum].generateCoredumpName(),
-        );
+    string getCorePath(in uint coreNum) const
+    {
+        return buildPath(coredumpDir.getTargetPath(),
+                coredumpDir.coredumps[coreNum].generateCoredumpName());
     }
 
     /// Return path to the executable
-    string getExePath(in uint coreNum) const {
-        return buildPath(
-            coredumpDir.coredumps[coreNum].exePath,
-        );
+    string getExePath(in uint coreNum) const
+    {
+        return buildPath(coredumpDir.coredumps[coreNum].exePath);
     }
 
     /// Dump coredump `coreNum` to `targetPath`
-    void dumpCore(in uint coreNum, in string targetPath) const {
-        if(!ensureCoredump(coreNum)) {
+    void dumpCore(in uint coreNum, in string targetPath) const
+    {
+        if (!ensureCoredump(coreNum))
+        {
             stderr.writefln("Coredump number %s doesn't exist!", coreNum + humansCountFromOne);
             exit(1);
         }
@@ -140,47 +134,49 @@ class CoreCtl {
 
         logDebugf("Dumping core %d", coreNum);
 
-        switch(targetPath) {
-            case "":
-            case "stdout":
-                targetFile = stdout;
-                break;
-            default:
-                targetFile = File(targetPath, "w");
-                break;
+        switch (targetPath)
+        {
+        case "":
+        case "stdout":
+            targetFile = stdout;
+            break;
+        default:
+            targetFile = File(targetPath, "w");
+            break;
         }
 
         auto sourceFile = File(getCorePath(coreNum), "r");
 
-        foreach (ubyte[] buffer; sourceFile.byChunk(new ubyte[4096])) {
+        foreach (ubyte[] buffer; sourceFile.byChunk(new ubyte[4096]))
+        {
             targetFile.rawWrite(buffer);
         }
     }
 
     /// Open coredump `coreNum` in debugger
-    void debugCore(in uint coreNum) const {
-        if(!ensureCoredump(coreNum)) {
+    void debugCore(in uint coreNum) const
+    {
+        if (!ensureCoredump(coreNum))
+        {
             stderr.writefln("Coredump number %d doesn't exist!", coreNum + humansCountFromOne);
             exit(1);
         }
         auto corePath = getCorePath(coreNum);
         auto exePath = getExePath(coreNum);
         auto debuggerPid = spawnProcess(["gdb", exePath, corePath]);
-        scope(exit)
+        scope (exit)
             wait(debuggerPid);
     }
 
     /// Print information about coredump `coreNum`
-    void infoCore(in uint coreNum) const {
-        if(!ensureCoredump(coreNum)) {
+    void infoCore(in uint coreNum) const
+    {
+        if (!ensureCoredump(coreNum))
+        {
             stderr.writefln("Coredump number %d doesn't exist!", coreNum + humansCountFromOne);
             exit(1);
         }
-        writefln(
-            "Info about coredump: %d\n" ~
-            "Coredump path:       %s",
-            coreNum + humansCountFromOne,
-            getCorePath(coreNum)
-        );
+        writefln("Info about coredump: %d\n" ~ "Coredump path:       %s",
+                coreNum + humansCountFromOne, getCorePath(coreNum));
     }
 }

@@ -25,8 +25,7 @@ import std.format;
 import std.getopt;
 import std.stdio;
 
-immutable helpText =
-"
+immutable helpText = "
 Usage:
   corectl <subcommand> [OPTION...]
   
@@ -56,52 +55,62 @@ class Options
     string mode;
     string file;
 
-    this(string[] args) {
-        getopt(args,
-            "help|h", &showHelp,
-            "version|v", &showVersion,
-            "debug|d", &debugLevel,
-        );
+    this(string[] args)
+    {
+        getopt(args, "help|h", &showHelp, "version|v", &showVersion, "debug|d", &debugLevel);
 
-        if (showHelp || showVersion) {
+        if (showHelp || showVersion)
+        {
             return;
         }
 
         enforce(args.length >= 2, "Please specify a subcommand.");
 
         this.mode = args[1];
-        switch(this.mode) {
-            case "list":
-                enforce(args.length == 2, "Didn't expect additional arguments to 'list'");
-                break;
-            case "debug":
-            case "info":
-                enforce(args.length == 3, "Only expected two arguments (subcommand and ID)");
-                this.id = args[2].to!uint - 1;
-                break;
-            case "dump":
-                if (args.length == 3) {
-                    this.id = args[2].to!uint;
-                    if (this.id == 0) {
-                        writeln("IDs start from 0!");
-                    } else {
-                        this.id -= 1;
-                    }
-                } else if (args.length == 4) {
-                    this.id = args[2].to!uint;
-                    if (this.id == 0) {
-                        writeln("IDs start from 0!");
-                    } else {
-                        this.id -= 1;
-                    }
-                    this.file = args[3];
-                } else {
-                    assert(0, "Expected either ID or ID and file to dump to for subcommand");
+        switch (this.mode)
+        {
+        case "list":
+            enforce(args.length == 2, "Didn't expect additional arguments to 'list'");
+            break;
+        case "debug":
+        case "info":
+            enforce(args.length == 3, "Only expected two arguments (subcommand and ID)");
+            this.id = args[2].to!uint - 1;
+            break;
+        case "dump":
+            if (args.length == 3)
+            {
+                this.id = args[2].to!uint;
+                if (this.id == 0)
+                {
+                    writeln("IDs start from 0!");
                 }
+                else
+                {
+                    this.id -= 1;
+                }
+            }
+            else if (args.length == 4)
+            {
+                this.id = args[2].to!uint;
+                if (this.id == 0)
+                {
+                    writeln("IDs start from 0!");
+                }
+                else
+                {
+                    this.id -= 1;
+                }
+                this.file = args[3];
+            }
+            else
+            {
+                assert(0, "Expected either ID or ID and file to dump to for subcommand");
+            }
 
-                break;
-            default:
-                assert(0, format("Unknown subcommand %s", this.mode));
+            break;
+        default:
+            assert(0, format("Unknown subcommand %s", this.mode));
         }
     }
 }

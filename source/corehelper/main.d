@@ -45,14 +45,17 @@ int main(string[] args)
     Configuration conf;
 
     logDebugf("Loading configuration from path '%s'...", configPath);
-    try {
+    try
+    {
         conf = new Configuration(configPath);
-    } catch (ConfigurationException e) {
+    }
+    catch (ConfigurationException e)
+    {
         errorf("Couldn't read configuration at path %s due to error %s\n", configPath, e);
         return 1;
     }
 
-    auto coreHelper = new CoreHelper(cast(immutable Configuration)conf, options);
+    auto coreHelper = new CoreHelper(cast(immutable Configuration) conf, options);
 
     return coreHelper.writeCoredump();
 }

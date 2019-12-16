@@ -70,7 +70,8 @@ struct Options
     long timestamp;
 
     /// Convert a `Options` to a `Coredump`
-    Coredump toCoredump() const {
+    Coredump toCoredump() const
+    {
         // The kernel sends `!` instead of `/`: http://man7.org/linux/man-pages/man5/core.5.html
         auto slashPath = this.exePath.replace("!", "/");
         SysTime dTime = unixTimeToStdTime(this.timestamp);

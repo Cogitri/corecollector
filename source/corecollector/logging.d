@@ -22,7 +22,8 @@ module source.corecollector.logging;
 import hunt.logging;
 
 /// Setup the logging with the supplied logging level.
-void setupLogging(const LogLevel l) {
+void setupLogging(const LogLevel l)
+{
     LogConf conf;
     conf.disableConsole = false;
     conf.fileName = "/dev/null";

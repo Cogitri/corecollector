@@ -35,7 +35,8 @@ import std.stdio;
 import std.uuid;
 
 /// A class describing a single coredump
-class Coredump {
+class Coredump
+{
     /// The PID of the program which crashed
     long pid;
     /// The UID of the user running the program which crashed
@@ -54,24 +55,17 @@ class Coredump {
     private string filename;
 
     /// ctor to construct a `Coredump`
-    this(
-        in long uid,
-        in long gid,
-        in long pid,
-        in long sig,
-        in SysTime timestamp,
-        in string exe,
-        in string exePath,
-        ) pure nothrow
-        {
-            this.uid = uid;
-            this.pid = pid;
-            this.gid = gid;
-            this.sig = sig;
-            this.exe = exe;
-            this.exePath = exePath;
-            this.timestamp = timestamp;
-        }
+    this(in long uid, in long gid, in long pid, in long sig, in SysTime timestamp,
+            in string exe, in string exePath) pure nothrow
+    {
+        this.uid = uid;
+        this.pid = pid;
+        this.gid = gid;
+        this.sig = sig;
+        this.exe = exe;
+        this.exePath = exePath;
+        this.timestamp = timestamp;
+    }
 
     /// ctor to construct a `Coredump` from a JSON value
     this(in JSONValue json)
@@ -79,15 +73,9 @@ class Coredump {
         logDebugf("Constructing Coredump from JSON: %s", json);
 
         SysTime time = std.datetime.SysTime.fromISOString(json["timestamp"].str);
-        auto core = this(
-            json["uid"].integer,
-            json["gid"].integer,
-            json["pid"].integer,
-            json["sig"].integer,
-            time,
-            json["exe"].str,
-            json["exePath"].str,
-        );
+        auto core = this(json["uid"].integer, json["gid"].integer,
+                json["pid"].integer, json["sig"].integer, time,
+                json["exe"].str, json["exePath"].str);
 
         core.filename = generateCoredumpName();
     }
@@ -95,42 +83,42 @@ class Coredump {
     /// Generate a unique filename for a coredump.
     final string generateCoredumpName() const
     {
-        auto filename =  this.exe ~ "-"
-            ~ this.sig.to!string ~ "-"
-            ~ this.pid.to!string ~ "-"
-            ~ this.uid.to!string ~ "-"
-            ~ this.gid.to!string ~ "-"
-            ~ this.timestamp.toISOString;
+        auto filename = this.exe ~ "-" ~ this.sig.to!string ~ "-"
+            ~ this.pid.to!string ~ "-" ~ this.uid.to!string ~ "-"
+            ~ this.gid.to!string ~ "-" ~ this.timestamp.toISOString;
         auto filenameFinal = filename ~ sha1UUID(filename).to!string;
         logDebugf("Generated filename for coredump %s: %s", this, filenameFinal);
         return filenameFinal;
     }
 
     /// Convert the `Coredump` to a `JSONValue`
-    JSONValue toJson() const {
+    JSONValue toJson() const
+    {
         return JSONValue([
-            "exe": JSONValue(this.exe),
-            "exePath": JSONValue(this.exePath),
-            "filename": JSONValue(this.filename),
-            "gid": JSONValue(this.gid),
-            "pid": JSONValue(this.pid),
-            "sig": JSONValue(this.sig),
-            "timestamp": JSONValue(this.timestamp.toISOString),
-            "uid": JSONValue(this.uid),
-            ]);
+                "exe": JSONValue(this.exe),
+                "exePath": JSONValue(this.exePath),
+                "filename": JSONValue(this.filename),
+                "gid": JSONValue(this.gid),
+                "pid": JSONValue(this.pid),
+                "sig": JSONValue(this.sig),
+                "timestamp": JSONValue(this.timestamp.toISOString),
+                "uid": JSONValue(this.uid),
+                ]);
     }
 }
 
 /// Exception thrown if there's no CoredumpDir created yet and we're not in readOnly mode.
 class NoCoredumpDir : Exception
 {
-    this(string msg, string file = __FILE__, size_t line = __LINE__) {
+    this(string msg, string file = __FILE__, size_t line = __LINE__)
+    {
         super(msg, file, line);
     }
 }
 
 /// The `CoredumpDir` holds information about all collected `Coredump`s
-class CoredumpDir {
+class CoredumpDir
+{
     /// All known `Coredump`s
     Coredump[] coredumps;
     private string targetPath;
@@ -139,20 +127,24 @@ class CoredumpDir {
     /// Wheter we want to do changes to the coredumpDir (corehelper) or not (corectl).
     immutable bool readOnly = false;
 
-    private this() {
+    private this()
+    {
         this.coredumps = new Coredump[0];
     }
 
     /// ctor to directly construct a `CoredumpDir` from a JSON value containing multiple `Coredump`s.
-    this(in JSONValue json) {
+    this(in JSONValue json)
+    {
         logDebugf("Constructing CoredumpDir from JSON %s", json);
-        foreach(x; json["coredumps"].array) {
+        foreach (x; json["coredumps"].array)
+        {
             coredumps ~= new Coredump(x);
         }
     }
 
     /// ctor to construct a `CoredumpDir` from a `targetPath` in which a `coredumps.json` is contained
-    this(in string targetPath, bool readOnly) {
+    this(in string targetPath, bool readOnly)
+    {
         this.readOnly = readOnly;
         this.targetPath = targetPath;
         auto configPath = buildPath(targetPath, this.configName);
@@ -166,14 +158,16 @@ class CoredumpDir {
     }
 
     /// Convert the `CoredumpDir` to a `JSONValue`
-    JSONValue toJson() const {
+    JSONValue toJson() const
+    {
         return JSONValue([
-            "coredumps": JSONValue(this.coredumps.map!(p => p.toJson).array),
-        ]);
+                "coredumps": JSONValue(this.coredumps.map!(p => p.toJson).array)
+                ]);
     }
 
     /// Add a `Coredump` to the `CoredumpDir` and write it from the stdin to its target location.
-    void addCoredump(Coredump coredump) {
+    void addCoredump(Coredump coredump)
+    {
         logDebugf("Adding coredump '%s'", coredump);
         this.coredumps ~= coredump;
 
@@ -190,28 +184,36 @@ class CoredumpDir {
     }
 
     /// Make sure the `CoredumpDir` exists already and if it doesn't put a default, empty config in there.
-    private void ensureDir(in string configPath) const {
-        if (!configPath.exists) {
-            if (this.readOnly) {
+    private void ensureDir(in string configPath) const
+    {
+        if (!configPath.exists)
+        {
+            if (this.readOnly)
+            {
                 throw new NoCoredumpDir("Can't create new directory in read-only mode!");
             }
-            infof("Config path '%s' doesn't exist, creating it and writing default config to it...", configPath);
-            if(!this.targetPath.exists) {
+            infof("Config path '%s' doesn't exist, creating it and writing default config to it...",
+                    configPath);
+            if (!this.targetPath.exists)
+            {
                 this.targetPath.mkdir;
             }
 
-            immutable auto defaultConfig = `{"coredumps": [], "targetPath": "` ~ this.targetPath ~ `"}` ~ "\n";
+            immutable auto defaultConfig = `{"coredumps": [], "targetPath": "`
+                ~ this.targetPath ~ `"}` ~ "\n";
             this.writeConfig(defaultConfig);
         }
     }
 
     /// Write the configuration file of the `CoredumpDir` to the `configPath`.
-    void writeConfig() const {
+    void writeConfig() const
+    {
         auto coredumpJson = this.toJson().toString();
         writeConfig(coredumpJson);
     }
 
-    private void writeConfig(in string JSONConfig) const {
+    private void writeConfig(in string JSONConfig) const
+    {
         auto path = buildPath(targetPath, configName);
         logDebugf("Writing CoredumpDir config '%s' to path '%s'", JSONConfig, path);
         auto configFile = File(path, "w");
@@ -220,18 +222,20 @@ class CoredumpDir {
         configFile.write(buf.toString());
     }
 
-    string getTargetPath() const pure nothrow @safe {
+    string getTargetPath() const pure nothrow @safe
+    {
         return this.targetPath;
     }
 }
 
-unittest {
+unittest
+{
     import std.format : format;
 
-    auto core = new Coredump(1000, 1000, 14_948, 6, SysTime(1_574_450_085), "Xwayland", "/usr/bin/");
+    auto core = new Coredump(1000, 1000, 14_948, 6, SysTime(1_574_450_085),
+            "Xwayland", "/usr/bin/");
 
-    auto validString =
-        `{"exe":"Xwayland","exePath":"\/usr\/bin\/","filename":"",`
+    auto validString = `{"exe":"Xwayland","exePath":"\/usr\/bin\/","filename":"",`
         ~ `"gid":1000,"pid":14948,"sig":6,"timestamp":"00010101T005605.4450085","uid":1000}`;
     auto validJSON = parseJSON(validString);
     auto generatedJSON = core.toJson();
@@ -246,7 +250,8 @@ unittest {
     assert(parsedCore.gid == core.gid);
 }
 
-unittest {
+unittest
+{
     import std.format : format;
 
     auto core1 = new Coredump(1, 1, 1, 1, SysTime(1970), "test", "/usr/bin/");
@@ -255,18 +260,18 @@ unittest {
     coredumpDir.coredumps ~= core1;
     coredumpDir.coredumps ~= core2;
 
-    auto validString = `{"coredumps":`
-        ~ `[{"exe":"test","exePath":"\/usr\/bin\/","filename":"","gid":1,"pid":1,"sig":1, "timestamp":"00010101T005328.000197","uid":1},`
-        ~ `{"exe":"test","exePath":"\/usr\/bin\/","filename":"","gid":1,"pid":1,"sig":1,"timestamp":"00010101T005328.0001971","uid":1}]}`;
+    auto validString = `{"coredumps": [{"exe":"test","exePath":"\/usr\/bin\/","filename":"","gid":1,"pid":1,"sig":1, "timestamp":"00010101T005328.000197","uid":1}, {"exe":"test","exePath":"\/usr\/bin\/","filename":"","gid":1,"pid":1,"sig":1,"timestamp":"00010101T005328.0001971","uid":1}]}`;
     auto validJSON = parseJSON(validString);
     auto generatedJSON = coredumpDir.toJson();
     assert(generatedJSON == validJSON, format("Expected %s, got %s", validJSON, generatedJSON));
 
     auto coredumpDirParsed = new CoredumpDir(generatedJSON);
     assert(coredumpDirParsed.targetPath == coredumpDir.targetPath,
-        format("Expected %s, got %s", coredumpDir.targetPath, coredumpDirParsed.targetPath));
+            format("Expected %s, got %s", coredumpDir.targetPath, coredumpDirParsed.targetPath));
     assert(coredumpDirParsed.coredumps[0].exe == coredumpDir.coredumps[0].exe,
-        format("Expected %s, got %s", coredumpDir.coredumps[0].exe, coredumpDirParsed.coredumps[0].exe));
+            format("Expected %s, got %s", coredumpDir.coredumps[0].exe,
+                coredumpDirParsed.coredumps[0].exe));
     assert(coredumpDirParsed.coredumps[1].timestamp == coredumpDir.coredumps[1].timestamp,
-        format("Expected %s, got %s", coredumpDir.coredumps[1].timestamp, coredumpDirParsed.coredumps[1].timestamp));
+            format("Expected %s, got %s", coredumpDir.coredumps[1].timestamp,
+                coredumpDirParsed.coredumps[1].timestamp));
 }

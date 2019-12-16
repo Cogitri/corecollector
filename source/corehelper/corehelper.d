@@ -21,15 +21,20 @@ module corehelper.corehelper;
 
 import corecollector.configuration;
 import corecollector.coredump;
+static import corecollector.globals;
 import corehelper.options;
 
 import hunt.logging;
 
+import core.sys.posix.grp;
+import core.sys.posix.pwd;
+import core.sys.posix.unistd;
 import std.exception : ErrnoException;
 
 /// `CoreHelper` is the main class of the `corehelper` module holding most
 /// of its functionality
-class CoreHelper {
+class CoreHelper
+{
     /// The coredump we're currently handling
     Coredump coredump;
     /// The configuration we loaded from the filesystem
@@ -39,20 +44,26 @@ class CoreHelper {
 
     /// ctor for generating a `CoreHelper` with the configuration
     /// and command line arguments.
-    this(immutable Configuration config, immutable Options opt) {
+    this(immutable Configuration config, immutable Options opt)
+    {
         this.config = config;
         this.opt = opt;
         this.coredump = this.opt.toCoredump;
     }
 
     /// Write the coredump to the `CoredumpDir`
-    int writeCoredump() {
+    int writeCoredump()
+    {
         auto coredumpDir = new CoredumpDir(this.config.targetPath, false);
-        try {
+
+        try
+        {
             coredumpDir.addCoredump(this.coredump);
             coredumpDir.writeConfig();
             return 0;
-        } catch (ErrnoException e) {
+        }
+        catch (ErrnoException e)
+        {
             errorf("Couldn't save coredump due to error %s\n", e);
             return 1;
         }
