@@ -19,19 +19,27 @@
 
 module corecollector.coredump;
 
-import corecollector.globals;
+static import corecollector.globals;
 
 import hunt.logging;
 
+import core.stdc.errno;
+import core.sys.posix.grp;
+import core.sys.posix.pwd;
+import core.sys.posix.unistd;
+import core.sys.posix.sys.stat;
 import std.algorithm;
 import std.array;
 import std.conv;
 import std.datetime;
+import std.exception;
 import std.file;
+import std.format;
 import std.json;
 import std.outbuffer;
 import std.path;
 import std.stdio;
+import std.string;
 import std.uuid;
 
 /// A class describing a single coredump
@@ -107,6 +115,24 @@ class Coredump
     }
 }
 
+/// Get the UID of the user we're supposed to run as
+uint getUid()
+{
+    const auto corecollectorUserInfo = getpwnam(corecollector.globals.user.toStringz);
+    enforce(corecollectorUserInfo != null,
+            "Failed to get the UID of the 'corecollector' user. Please make sure it exists!");
+    return corecollectorUserInfo.pw_uid;
+}
+
+/// Get the GID of the user we're supposed to run as
+uint getGid()
+{
+    const auto corecollectorGroupInfo = getgrnam(corecollector.globals.group.toStringz);
+    enforce(corecollectorGroupInfo != null,
+            "Failed to get the GID of the 'corecollector' group. Please make sure it exists!");
+    return corecollectorGroupInfo.gr_gid;
+}
+
 /// Exception thrown if there's no CoredumpDir created yet and we're not in readOnly mode.
 class NoCoredumpDir : Exception
 {
@@ -174,7 +200,12 @@ class CoredumpDir
         auto coredumpPath = buildPath(this.targetPath, coredump.generateCoredumpName());
         auto target = File(coredumpPath, "w");
         scope (exit)
+        {
             target.close();
+            errnoEnforce(chmod(coredumpPath.toStringz, octal!(640)) == 0,
+                    format("Failed to change permissions on file %s due to error %s",
+                        coredumpPath, errno));
+        }
 
         logDebugf("Writing coredump to path '%s'", coredumpPath);
         foreach (ubyte[] buffer; stdin.byChunk(new ubyte[4096]))
@@ -198,10 +229,17 @@ class CoredumpDir
             {
                 this.targetPath.mkdir;
             }
-
+            errnoEnforce(chown(this.targetPath.toStringz, getUid(), getGid()) == 0,
+                    format("Failed to chown path %s due to error %d", this.targetPath, errno));
+            errnoEnforce(chmod(this.targetPath.toStringz, octal!(750)) == 0,
+                    format("Failed to chmod path %s due to error %d", this.targetPath, errno));
             immutable auto defaultConfig = `{"coredumps": [], "targetPath": "`
                 ~ this.targetPath ~ `"}` ~ "\n";
             this.writeConfig(defaultConfig);
+            errnoEnforce(chown(configPath.toStringz, getUid(), getGid()) == 0,
+                    format("Failed to chown path %s due to error %d", configPath, errno));
+            errnoEnforce(chmod(configPath.toStringz, octal!(640)) == 0,
+                    format("Failed to chmod path %s due to error %d", configPath, errno));
         }
     }
 

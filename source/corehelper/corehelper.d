@@ -26,10 +26,12 @@ import corehelper.options;
 
 import hunt.logging;
 
-import core.sys.posix.grp;
-import core.sys.posix.pwd;
 import core.sys.posix.unistd;
-import std.exception : ErrnoException;
+import std.exception;
+import std.file;
+import std.format;
+import std.path;
+import std.stdio;
 
 /// `CoreHelper` is the main class of the `corehelper` module holding most
 /// of its functionality
@@ -51,10 +53,48 @@ class CoreHelper
         this.coredump = this.opt.toCoredump;
     }
 
+    /// Simple check to see if we can write a file to the coredumpDir.
+    /// Do note that as of now this just creates a temp file which is later
+    /// removed to check this instead of calling stat() for simplicity reasons.
+    private bool ensureDirWriteable()
+    {
+        try
+        {
+            auto tempFile = buildPath(corecollector.globals.coredumpPath, deleteme);
+            File(tempFile, "w");
+            scope (exit)
+                remove(tempFile);
+            return true;
+        }
+        catch (FileException e)
+        {
+            return false;
+        }
+    }
+
+    /// Drop privileges to not run as root when we don't have to.
+    private void dropPrivileges(in uint corecollectorUid, in uint corecollectorGid)
+    {
+        if (getuid() == 0)
+        {
+            errnoEnforce(setgid(corecollectorGid) == 0,
+                    format("Failed to drop group to %d", corecollectorGid));
+            errnoEnforce(setuid(corecollectorUid) == 0,
+                    format("Failed to drop user to %d", corecollectorUid));
+        }
+    }
+
     /// Write the coredump to the `CoredumpDir`
     int writeCoredump()
     {
         auto coredumpDir = new CoredumpDir(this.config.targetPath, false);
+
+        auto corecollectorUid = getUid();
+        auto corecollectorGid = getGid();
+        dropPrivileges(corecollectorUid, corecollectorGid);
+        enforce(ensureDirWriteable(),
+                format("Directory %s isn't writable for user %s! Please make sure it is writeable.",
+                    corecollector.globals.coredumpPath, corecollector.globals.user));
 
         try
         {
