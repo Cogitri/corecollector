@@ -29,9 +29,9 @@ import std.string;
 class SyslogLogger : FileLogger
 {
     /// Construct a `SyslogLogger` and call `openlog`.
-    this(LogLevel lv) @trusted
+    this(LogLevel lv, File logFile) @trusted
     {
-        super(stderr, lv);
+        super(logFile, lv);
         openlog("corecollector", LOG_ODELAY, LOG_DAEMON);
     }
 
@@ -71,7 +71,7 @@ class SyslogLogger : FileLogger
 }
 
 /// Setup the logging with the supplied logging level.
-void setupLogging(const LogLevel l)
+void setupLogging(const LogLevel l, File logFile)
 {
-    sharedLog = new SyslogLogger(l);
+    sharedLog = new SyslogLogger(l, logFile);
 }

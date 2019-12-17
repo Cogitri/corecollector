@@ -47,6 +47,8 @@ class Configuration
     /// The path to place coredumps at
     @Value("targetPath")
     string targetPath = coredumpPath;
+    /// Where to log to
+    string logPath = "/var/log/corecollector.log";
 
     /// Empty constructor used with hunt's `ConfigBuilder`
     private this()

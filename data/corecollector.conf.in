@@ -6,3 +6,5 @@ compression = none
 maxSize = 0
 # The path to save coredumps to.
 targetPath = @COREDUMP_PATH@
+# Where to log to. Pass /dev/null to only log to syslog
+logPath = /var/log/corecollector.log

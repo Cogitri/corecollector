@@ -21,53 +21,66 @@ module corehelper.options;
 
 import corecollector.coredump;
 
-import hunt.util.Argument;
-
 import std.array;
 import std.datetime;
+import std.experimental.logger;
+import std.getopt;
+
+auto immutable helpText = "
+Usage:
+  corehelper [OPTION...]
+
+Dump a coredump from stdin to the coredumpdir for later access
+
+Help Options:
+  -h, --help         - Show help options.
+  -v, --version      - Print program version.
+
+Application Options (All of these NEED to be specified):
+  -e, --exe-name      - Specfiy the name of the executable which crashed.
+  -x, --exe-path      - Specify the path of the executable which crashed.
+  -p, --pid           - Specfiy the PID that was used when the program crashed.
+  -u, --uid           - Specify the UID of the user that ran the crashed program.
+  -g, --gid           - Specify the GID of the group that ran the crashed program.
+  -s, --signal        - Specify the signal that the program threw when crashing.
+  -t, --timestamp     - UNIX time at which the program crashed.";
 
 /// CLI arguments passed to this binary, usually by the kernel
-struct Options
+class Options
 {
-    /// If a user does want to run this binary this will print the help
-    @Option("help", "h")
-    @Help("Prints this help.")
-    OptionFlag help;
-
-    /// The string of the exe
-    @Option("exe-name", "e")
-    @Help("The name of the executable whose curedump you're sending me.")
+    /// Print the `helpText`.
+    bool showHelp;
+    /// Print the version.
+    bool showVersion;
+    /// The string of the exe.
     string exe;
-
-    /// The path of the exe
-    @Option("exe-path", "E")
-    @Help("The path of the executable whose coredump you're sending me,")
+    /// The path of the exe.
     string exePath;
-
-    /// The pid of the exe
-    @Option("pid", "p")
-    @Help("The PID of the executable whose coredump you're sending me.")
+    /// The pid of the program.
     long pid;
-
-    /// The uid of the exe
-    @Option("uid", "u")
-    @Help("The UID of the user who executed the executable whose coredump you're sending me.")
+    /// The uid of the user running the program.
     long uid;
-
-    /// The gid of the exe
-    @Option("gid", "g")
-    @Help("The GID of the user the executable whose coredump you're sending me.")
+    /// The gid of the group running the program.
     long gid;
-
-    /// The signal of the exe
-    @Option("signal", "s")
-    @Help("The signal the executable whose coredump you're sending me threw when crashing.")
+    /// The signal with which the program terminated.
     long signal;
-
-    /// The timestamp of the exe crashing
-    @Option("timestamp", "t")
-    @Help("The time the executable whose coredump you're sending me crashed.")
+    /// The timestamp of when the program crashed.
     long timestamp;
+
+    this(string[] args)
+    {
+        getopt(args, "help|h", &this.showHelp, "version|v", &this.showVersion,
+                std.getopt.config.required, "e|exe-name", &this.exe,
+                std.getopt.config.required, "x|exe-path", &this.exePath,
+                std.getopt.config.required, "p|pid", &this.pid,
+                std.getopt.config.required, "u|uid", &this.uid,
+                std.getopt.config.required, "g|gid", &this.gid,
+                std.getopt.config.required, "s|signal", &this.signal,
+                std.getopt.config.required, "t|timestamp", &this.timestamp);
+        tracef(
+                "Parsed options: exe: '%s', exePath: '%s, pid: '%d', uid: '%d', gid: '%d', singal: '%d', timestamp: '%d'",
+                this.exe, this.exePath, this.pid, this.uid, this.gid, this.signal, this.timestamp);
+    }
 
     /// Convert a `Options` to a `Coredump`
     Coredump toCoredump() const

@@ -1,1 +1,1 @@
-kernel.core_pattern=|@LIBEXEC_DIR@/corehelper -e=%e -E=%E -p=%P -s=%s -t=%t -u=%u -g=%g
+kernel.core_pattern=|@LIBEXEC_DIR@/corehelper -e=%e -x=%E -p=%P -s=%s -t=%t -u=%u -g=%g

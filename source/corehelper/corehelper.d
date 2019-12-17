@@ -39,13 +39,13 @@ class CoreHelper
     /// The coredump we're currently handling
     Coredump coredump;
     /// The configuration we loaded from the filesystem
-    immutable Configuration config;
+    const Configuration config;
     /// The options that the user (kernel) has supplied on the CLI
-    Options opt;
+    const Options opt;
 
     /// ctor for generating a `CoreHelper` with the configuration
     /// and command line arguments.
-    this(immutable Configuration config, immutable Options opt)
+    this(in Configuration config, in Options opt)
     {
         this.config = config;
         this.opt = opt;

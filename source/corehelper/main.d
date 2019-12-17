@@ -21,6 +21,7 @@ module corehelper.main;
 
 import corecollector.configuration;
 import corecollector.coredump;
+static import corecollector.globals;
 import corecollector.logging;
 import corehelper.corehelper;
 import corehelper.options;
@@ -32,15 +33,14 @@ import std.conv : to;
 import std.experimental.logger;
 import std.file;
 import std.path;
-
-private immutable usage = usageString!Options("corehelper");
-private immutable help = helpString!Option;
+import std.stdio : writeln, File;
 
 int main(string[] args)
 {
-    setupLogging(LogLevel.trace);
-    // We ignore this exception - the kernel should always pass us the correct args.
-    immutable auto options = parseArgs!Options(args[1 .. $]);
+    // Use /dev/null here, since we do log calls in Configuration's constructor
+    // Once we have constructed the Configuration we re-run this with the proper log
+    // path
+    setupLogging(LogLevel.trace, File("/dev/null", "w"));
 
     Configuration conf;
 
@@ -54,6 +54,22 @@ int main(string[] args)
         errorf("Couldn't read configuration at path %s due to error %s\n", configPath, e);
         return 1;
     }
+
+    setupLogging(LogLevel.trace, File(conf.logPath, "w"));
+
+    const auto options = new Options(args);
+
+    if (options.showHelp)
+    {
+        writeln(helpText);
+    }
+    else if (options.showVersion)
+    {
+        writeln(corecollector.globals.corecollectorVersion);
+    }
+
+    //setupLogging(LogLevel.trace, File(conf.logPath, "w"));
+    info("Starting corehelper to collect coredump.");
 
     auto coreHelper = new CoreHelper(cast(immutable Configuration) conf, options);
 

@@ -55,7 +55,7 @@ int main(string[] args)
         writeln(corecollector.globals.corecollectorVersion);
         return 0;
     }
-    startLogging(options.debugLevel);
+    startLogging(options.debugLevel, stderr);
 
     Configuration conf;
 
@@ -118,7 +118,7 @@ int main(string[] args)
 }
 
 /// Setup logging for this moduke, depending on user input
-private void startLogging(int debugLevel)
+private void startLogging(int debugLevel, File logFile)
 {
     LogLevel logLevel;
 
@@ -140,7 +140,7 @@ private void startLogging(int debugLevel)
         assert(0, format("Invalid loglevel '%s'", debugLevel));
     }
 
-    setupLogging(cast(const) logLevel);
+    setupLogging(cast(const) logLevel, logFile);
 }
 
 /// Make sure that `corehelper` is set as the kernel's corecollector server
@@ -149,7 +149,7 @@ void ensureCorrectSysctl()
     string sysctlVal = readText("/proc/sys/kernel/core_pattern");
 
     string expectedVal = "|" ~ buildPath(corecollector.globals.libexecDir,
-            "corehelper") ~ " -e=%e -E=%E -p=%P -s=%s -t=%t -u=%u -g=%g\n";
+            "corehelper") ~ " -e=%e -x=%E -p=%P -s=%s -t=%t -u=%u -g=%g\n";
 
     if (sysctlVal != expectedVal)
     {
