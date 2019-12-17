@@ -7,5 +7,5 @@ executable(
     corehelper_setup_src,
     install: true,
     install_dir: libexec_dir,
-    dependencies: [hunt_dep, core_lib_dep],
+    dependencies: core_lib_dep,
 )

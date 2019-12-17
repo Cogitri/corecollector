@@ -8,5 +8,5 @@ executable(
     'corectl',
     main_src,
     install: true,
-    dependencies: [hunt_dep, core_lib_dep],
+    dependencies: core_lib_dep,
 )

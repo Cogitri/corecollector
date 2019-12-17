@@ -12,8 +12,6 @@ d_mod_version = []
 
 src_inc = include_directories('source')
 
-hunt_dep = dependency('hunt-1')
-
 prefix = get_option('prefix')
 libexec_dir = join_paths(prefix, get_option('libexecdir'), 'corecollector')
 varlib_dir = join_paths(prefix, get_option('localstatedir'), 'lib', 'corecollector')
@@ -27,8 +25,6 @@ if vcs_tag == ''
 else
     corecollector_version = meson.project_version() + '-@0@'.format (vcs_tag)
 endif
-
-
 
 subdir('source')
 subdir('data')
