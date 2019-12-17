@@ -27,7 +27,6 @@ import corectl.corectl;
 import corectl.options;
 
 import hunt.Exceptions : ConfigurationException;
-import hunt.logging;
 import hunt.util.Argument;
 
 static import core.stdc.errno;
@@ -36,6 +35,7 @@ import std.algorithm;
 import std.algorithm.mutation : copy;
 import std.array;
 import std.exception;
+import std.experimental.logger;
 import std.file;
 import std.format;
 import std.path;
@@ -61,12 +61,12 @@ int main(string[] args)
 
     try
     {
-        logDebugf("Loading configuration from path %s", configPath);
+        tracef("Loading configuration from path %s", configPath);
         conf = new Configuration(configPath);
     }
     catch (ConfigurationException e)
     {
-        criticalf("Couldn't read configuration at path %s due to error %s\n", configPath, e);
+        fatalf("Couldn't read configuration at path %s due to error %s\n", configPath, e);
         return 1;
     }
 
@@ -77,7 +77,7 @@ int main(string[] args)
 
     try
     {
-        logDebugf("Opening CoredumpDir at path %s", conf.targetPath);
+        tracef("Opening CoredumpDir at path %s", conf.targetPath);
         coreDir = new CoredumpDir(conf.targetPath, true);
     }
     catch (NoCoredumpDir)
@@ -125,22 +125,22 @@ private void startLogging(int debugLevel)
     switch (debugLevel) with (LogLevel)
     {
     case -1:
-        logLevel = LOG_ERROR;
+        logLevel = LogLevel.error;
         break;
     case 0:
-        logLevel = LOG_WARNING;
+        logLevel = LogLevel.warning;
         break;
     case 1:
-        logLevel = LOG_INFO;
+        logLevel = LogLevel.info;
         break;
     case 2:
-        logLevel = LOG_DEBUG;
+        logLevel = LogLevel.trace;
         break;
     default:
         assert(0, format("Invalid loglevel '%s'", debugLevel));
     }
 
-    setupLogging(logLevel);
+    setupLogging(cast(const) logLevel);
 }
 
 /// Make sure that `corehelper` is set as the kernel's corecollector server

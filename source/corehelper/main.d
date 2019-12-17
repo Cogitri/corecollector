@@ -25,11 +25,11 @@ import corecollector.logging;
 import corehelper.corehelper;
 import corehelper.options;
 
-import hunt.logging;
 import hunt.util.Argument;
 import hunt.Exceptions : ConfigurationException;
 
 import std.conv : to;
+import std.experimental.logger;
 import std.file;
 import std.path;
 
@@ -38,13 +38,13 @@ private immutable help = helpString!Option;
 
 int main(string[] args)
 {
-    setupLogging(LogLevel.LOG_DEBUG);
+    setupLogging(LogLevel.trace);
     // We ignore this exception - the kernel should always pass us the correct args.
     immutable auto options = parseArgs!Options(args[1 .. $]);
 
     Configuration conf;
 
-    logDebugf("Loading configuration from path '%s'...", configPath);
+    tracef("Loading configuration from path '%s'...", configPath);
     try
     {
         conf = new Configuration(configPath);

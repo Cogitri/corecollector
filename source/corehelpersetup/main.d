@@ -2,10 +2,9 @@ module corehelpersetup.main;
 
 import corecollector.logging;
 
-import hunt.logging;
-
 import core.stdc.errno;
 import core.sys.posix.sys.resource;
+import std.experimental.logger;
 
 version (CRuntime_Musl)
 {
@@ -17,7 +16,8 @@ version (CRuntime_Musl)
 
 int main()
 {
-    setupLogging(LogLevel.LOG_DEBUG);
+    immutable auto logLevel = LogLevel.trace;
+    setupLogging(logLevel);
 
     const auto unlimitedCores = rlimit(RLIM_INFINITY, RLIM_INFINITY);
 

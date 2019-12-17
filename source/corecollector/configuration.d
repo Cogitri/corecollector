@@ -21,10 +21,10 @@ module corecollector.configuration;
 
 import corecollector.globals;
 
-import hunt.logging;
 import hunt.util.Configuration;
 
 import std.algorithm;
+import std.experimental.logger;
 import std.file;
 import std.path;
 import std.stdio;
@@ -58,10 +58,10 @@ class Configuration
     this(string configPath)
     {
         auto path = relativePath(configPath, std.file.thisExePath.dirName);
-        logDebugf("Loading configuration from relative path %s.", path);
+        tracef("Loading configuration from relative path %s.", path);
         ConfigBuilder confManager = new ConfigBuilder(path);
         auto conf = confManager.build!Configuration();
-        logDebugf("Configuration: %s", conf);
+        tracef("Configuration: %s", conf);
         compression = move(conf.compression);
         maxSize = conf.maxSize;
         targetPath = move(conf.targetPath);

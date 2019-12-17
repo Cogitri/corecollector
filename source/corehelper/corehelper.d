@@ -24,10 +24,9 @@ import corecollector.coredump;
 static import corecollector.globals;
 import corehelper.options;
 
-import hunt.logging;
-
 import core.sys.posix.unistd;
 import std.exception;
+import std.experimental.logger;
 import std.file;
 import std.format;
 import std.path;

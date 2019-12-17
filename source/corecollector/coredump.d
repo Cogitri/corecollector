@@ -21,8 +21,6 @@ module corecollector.coredump;
 
 static import corecollector.globals;
 
-import hunt.logging;
-
 import core.stdc.errno;
 import core.sys.posix.grp;
 import core.sys.posix.pwd;
@@ -33,6 +31,7 @@ import std.array;
 import std.conv;
 import std.datetime;
 import std.exception;
+import std.experimental.logger;
 import std.file;
 import std.format;
 import std.json;
@@ -78,7 +77,7 @@ class Coredump
     /// ctor to construct a `Coredump` from a JSON value
     this(in JSONValue json)
     {
-        logDebugf("Constructing Coredump from JSON: %s", json);
+        tracef("Constructing Coredump from JSON: %s", json);
 
         SysTime time = std.datetime.SysTime.fromISOString(json["timestamp"].str);
         auto core = this(json["uid"].integer, json["gid"].integer,
@@ -95,7 +94,7 @@ class Coredump
             ~ this.pid.to!string ~ "-" ~ this.uid.to!string ~ "-"
             ~ this.gid.to!string ~ "-" ~ this.timestamp.toISOString;
         auto filenameFinal = filename ~ sha1UUID(filename).to!string;
-        logDebugf("Generated filename for coredump %s: %s", this, filenameFinal);
+        tracef("Generated filename for coredump %s: %s", this, filenameFinal);
         return filenameFinal;
     }
 
@@ -170,7 +169,7 @@ class CoredumpDir
     /// ctor to directly construct a `CoredumpDir` from a JSON value containing multiple `Coredump`s.
     this(in JSONValue json)
     {
-        logDebugf("Constructing CoredumpDir from JSON %s", json);
+        tracef("Constructing CoredumpDir from JSON %s", json);
         foreach (x; json["coredumps"].array)
         {
             coredumps ~= new Coredump(x);
@@ -185,9 +184,9 @@ class CoredumpDir
         auto configPath = buildPath(targetPath, this.configName);
         this.ensureDir(configPath);
 
-        logDebugf("Reading coredump file from path '%s'...", configPath);
+        tracef("Reading coredump file from path '%s'...", configPath);
         auto coredump_text = readText(configPath);
-        logDebugf("Parsing text '%s' as JSON...", coredump_text);
+        tracef("Parsing text '%s' as JSON...", coredump_text);
         auto coredump_json = parseJSON(coredump_text);
         this(coredump_json);
     }
@@ -203,7 +202,7 @@ class CoredumpDir
     /// Add a `Coredump` to the `CoredumpDir` and write it from the stdin to its target location.
     void addCoredump(Coredump coredump)
     {
-        logDebugf("Adding coredump '%s'", coredump);
+        tracef("Adding coredump '%s'", coredump);
         this.coredumps ~= coredump;
 
         auto coredumpPath = buildPath(this.targetPath, coredump.generateCoredumpName());
@@ -216,7 +215,7 @@ class CoredumpDir
                         coredumpPath, errno));
         }
 
-        logDebugf("Writing coredump to path '%s'", coredumpPath);
+        tracef("Writing coredump to path '%s'", coredumpPath);
         foreach (ubyte[] buffer; stdin.byChunk(new ubyte[4096]))
         {
             target.rawWrite(buffer);
@@ -277,7 +276,7 @@ class CoredumpDir
     private void writeConfig(in string JSONConfig) const
     {
         auto path = buildPath(targetPath, configName);
-        logDebugf("Writing CoredumpDir config '%s' to path '%s'", JSONConfig, path);
+        tracef("Writing CoredumpDir config '%s' to path '%s'", JSONConfig, path);
         auto configFile = File(path, "w");
         auto buf = new OutBuffer();
         buf.write(JSONConfig);

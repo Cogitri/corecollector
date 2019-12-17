@@ -22,12 +22,11 @@ module corectl.corectl;
 import corecollector.globals;
 import corecollector.coredump;
 
-import hunt.logging;
-
 import core.stdc.stdlib;
 
 import std.conv;
 import std.exception;
+import std.experimental.logger;
 import std.datetime;
 import std.file;
 import std.format;
@@ -114,7 +113,7 @@ class CoreCtl
 
         File targetFile;
 
-        logDebugf("Dumping core %d", coreNum);
+        tracef("Dumping core %d", coreNum);
 
         switch (targetPath)
         {

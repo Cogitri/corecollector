@@ -17,16 +17,61 @@
     along with corecollector.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-module source.corecollector.logging;
+module corecollector.logging;
 
-import hunt.logging;
+import core.sys.posix.syslog;
+import std.experimental.logger;
+import std.stdio;
+import std.string;
+
+/// This `Logger` implementation is basically a `FileLogger` but also
+/// logs to syslog.
+class SyslogLogger : FileLogger
+{
+    /// Construct a `SyslogLogger` and call `openlog`.
+    this(LogLevel lv) @trusted
+    {
+        super(stderr, lv);
+        openlog("corecollector", LOG_ODELAY, LOG_DAEMON);
+    }
+
+    /// Write the log message to both stderr and syslog. Doesn't log if
+    /// loglevel is none.
+    override void writeLogMsg(ref LogEntry payload) @trusted
+    {
+        super.writeLogMsg(payload);
+        if (this.logLevel != LogLevel.off)
+        {
+            syslog(toSyslogLevel(payload.logLevel), payload.msg.toStringz);
+        }
+    }
+
+    /// Convert an enum to the respective syslog log level.
+    auto toSyslogLevel(LogLevel lv)
+    {
+        final switch (lv) with (LogLevel)
+        {
+        case trace:
+        case all:
+            return LOG_DEBUG;
+        case info:
+            return LOG_INFO;
+        case warning:
+            return LOG_WARNING;
+        case error:
+            return LOG_ERR;
+        case critical:
+            return LOG_CRIT;
+        case fatal:
+            return LOG_ALERT;
+        case off:
+            assert(0);
+        }
+    }
+}
 
 /// Setup the logging with the supplied logging level.
 void setupLogging(const LogLevel l)
 {
-    LogConf conf;
-    conf.disableConsole = false;
-    conf.fileName = "/dev/null";
-    conf.level = l;
-    logLoadConf(conf);
+    sharedLog = new SyslogLogger(l);
 }
