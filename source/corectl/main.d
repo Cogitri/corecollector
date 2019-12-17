@@ -85,6 +85,13 @@ int main(string[] args)
         writeln("No coredumps collected yet.");
         return 0;
     }
+    catch (NoPermsCoredumpDir)
+    {
+        writefln(
+                "You don't appear to have access to the coredumpdir. Only root and members of the %s group can access it.",
+                corecollector.globals.group);
+        return 1;
+    }
 
     auto coreCtl = new CoreCtl(cast(immutable) coreDir);
 

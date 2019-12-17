@@ -142,6 +142,15 @@ class NoCoredumpDir : Exception
     }
 }
 
+/// Exception thrown if we don't have sufficient permissions to access the `CoredumpDir`
+class NoPermsCoredumpDir : Exception
+{
+    this(string msg, string file = __FILE__, size_t line = __LINE__)
+    {
+        super(msg, file, line);
+    }
+}
+
 /// The `CoredumpDir` holds information about all collected `Coredump`s
 class CoredumpDir
 {
@@ -219,16 +228,31 @@ class CoredumpDir
     {
         if (!configPath.exists)
         {
-            if (this.readOnly)
+            if (!this.targetPath.exists)
             {
-                throw new NoCoredumpDir("Can't create new directory in read-only mode!");
+                if (this.readOnly)
+                {
+                    throw new NoCoredumpDir("Can't create new directory in read-only mode!");
+                }
+                this.targetPath.mkdir;
+            }
+            try
+            {
+                File(configPath, "w");
+            }
+            catch (ErrnoException e)
+            {
+                switch (e.errno)
+                {
+                case EACCES:
+                    throw new NoPermsCoredumpDir(
+                            "Unable to access configuration due to missing permissions!");
+                default:
+                    throw e;
+                }
             }
             infof("Config path '%s' doesn't exist, creating it and writing default config to it...",
                     configPath);
-            if (!this.targetPath.exists)
-            {
-                this.targetPath.mkdir;
-            }
             errnoEnforce(chown(this.targetPath.toStringz, getUid(), getGid()) == 0,
                     format("Failed to chown path %s due to error %d", this.targetPath, errno));
             errnoEnforce(chmod(this.targetPath.toStringz, octal!(750)) == 0,
