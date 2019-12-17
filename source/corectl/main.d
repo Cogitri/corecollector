@@ -21,7 +21,7 @@ module corecollector.corecollector;
 
 import corecollector.configuration;
 import corecollector.coredump;
-import corecollector.globals;
+static import corecollector.globals;
 import corecollector.logging;
 import corectl.corectl;
 import corectl.options;
@@ -52,7 +52,7 @@ int main(string[] args)
     }
     else if (options.showVersion)
     {
-        writeln(corecollectorVersion);
+        writeln(corecollector.globals.corecollectorVersion);
         return 0;
     }
     startLogging(options.debugLevel);
@@ -69,6 +69,9 @@ int main(string[] args)
         criticalf("Couldn't read configuration at path %s due to error %s\n", configPath, e);
         return 1;
     }
+
+    ensureCorrectSysctl();
+    ensureUserGroup();
 
     CoredumpDir coreDir;
 
@@ -131,4 +134,45 @@ private void startLogging(int debugLevel)
     }
 
     setupLogging(logLevel);
+}
+
+/// Make sure that `corehelper` is set as the kernel's corecollector server
+void ensureCorrectSysctl()
+{
+    string sysctlVal = readText("/proc/sys/kernel/core_pattern");
+
+    string expectedVal = "|" ~ buildPath(corecollector.globals.libexecDir,
+            "corehelper") ~ " -e=%e -E=%E -p=%P -s=%s -t=%t -u=%u -g=%g\n";
+
+    if (sysctlVal != expectedVal)
+    {
+        errorf("The sysctl value for 'kernel.core_pattern' is wrong!
+            As such corehelper won't receive any coredumps from the kernel.
+            Expected: '%s'
+            Got:      '%s'", expectedVal, sysctlVal);
+    }
+}
+
+/// Make sure the user and group we want to drop privileges to exist
+void ensureUserGroup()
+{
+    try
+    {
+        getUid();
+    }
+    catch (Exception)
+    {
+        errorf("Couldn't get UID for user '%s'. Please make sure it exists!",
+                corecollector.globals.user);
+    }
+
+    try
+    {
+        getGid();
+    }
+    catch (Exception)
+    {
+        errorf("Couldn't get GID for group '%s'. Please make sure it exists!",
+                corecollector.globals.group);
+    }
 }

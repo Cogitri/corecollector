@@ -48,24 +48,6 @@ class CoreCtl
     this(in CoredumpDir coreDir)
     {
         this.coredumpDir = coreDir;
-        this.ensureCorrectSysctl();
-    }
-
-    /// Make sure that `corehelper` is set as the kernel's corecollector server
-    void ensureCorrectSysctl() const
-    {
-        string sysctlVal = readText("/proc/sys/kernel/core_pattern");
-
-        string expectedVal = "|" ~ buildPath(libexecDir,
-                "corehelper") ~ " -e=%e -E=%E -p=%P -s=%s -t=%t -u=%u -g=%g\n";
-
-        if (sysctlVal != expectedVal)
-        {
-            errorf("The sysctl value for 'kernel.core_pattern' is wrong!
-                As such corehelper won't receive any coredumps from the kernel.
-                Expected: '%s'
-                Got:      '%s'", expectedVal, sysctlVal);
-        }
     }
 
     /// Write all available coredumps to the stdout
