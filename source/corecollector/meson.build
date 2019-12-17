@@ -7,6 +7,7 @@ globals_d = configure_file(
 lib_src = [
     'configuration.d',
     'coredump.d',
+    'muslsyslog.d',
     'logging.d',
     globals_d,
 ]

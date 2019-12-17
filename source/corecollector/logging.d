@@ -19,7 +19,15 @@
 
 module corecollector.logging;
 
-import core.sys.posix.syslog;
+version (CRuntime_Musl)
+{
+    import corecollector.muslsyslog;
+}
+else
+{
+    import core.sys.posix.syslog;
+}
+
 import std.experimental.logger;
 import std.stdio;
 import std.string;
