@@ -26,9 +26,6 @@ import corecollector.logging;
 import corehelper.corehelper;
 import corehelper.options;
 
-import hunt.util.Argument;
-import hunt.Exceptions : ConfigurationException;
-
 import std.conv : to;
 import std.experimental.logger;
 import std.file;
@@ -44,10 +41,9 @@ int main(string[] args)
 
     Configuration conf;
 
-    tracef("Loading configuration from path '%s'...", configPath);
     try
     {
-        conf = new Configuration(configPath);
+        conf = new Configuration();
     }
     catch (ConfigurationException e)
     {

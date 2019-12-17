@@ -26,9 +26,6 @@ import corecollector.logging;
 import corectl.corectl;
 import corectl.options;
 
-import hunt.Exceptions : ConfigurationException;
-import hunt.util.Argument;
-
 static import core.stdc.errno;
 
 import std.algorithm;
@@ -61,8 +58,7 @@ int main(string[] args)
 
     try
     {
-        tracef("Loading configuration from path %s", configPath);
-        conf = new Configuration(configPath);
+        conf = new Configuration();
     }
     catch (ConfigurationException e)
     {
