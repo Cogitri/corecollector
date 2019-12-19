@@ -45,7 +45,7 @@ class CoreHelper
 
     /// ctor for generating a `CoreHelper` with the configuration
     /// and command line arguments.
-    this(in Configuration config, in Options opt)
+    this(in Configuration config, in Options opt) @safe
     {
         this.config = config;
         this.opt = opt;

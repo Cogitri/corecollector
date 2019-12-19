@@ -44,13 +44,13 @@ class CoreCtl
     const CoredumpDir coredumpDir;
 
     /// ctor to construct with an existing `CoredumpDir`.
-    this(in CoredumpDir coreDir)
+    this(in CoredumpDir coreDir) @safe
     {
         this.coredumpDir = coreDir;
     }
 
     /// Write all available coredumps to the stdout
-    void listCoredumps()
+    void listCoredumps() @safe
     {
         // All of these are the maximum length of the Data + the length of the string describing them (e.g. "ID", "SIGNAL")
         immutable auto maxIdLength = this.coredumpDir.coredumps.length.to!string.length + 2;
@@ -76,7 +76,7 @@ class CoreCtl
     }
 
     /// Make sure the coredump exists. Starts counting from 0 being the first one.
-    bool ensureCoredump(in uint coreNum) const
+    bool ensureCoredump(in uint coreNum) const @safe
     {
         const auto len = coredumpDir.coredumps.length;
         if (len == 0)
@@ -90,14 +90,14 @@ class CoreCtl
     }
 
     /// Return path to the coredump
-    string getCorePath(in uint coreNum) const
+    string getCorePath(in uint coreNum) const @safe
     {
         return buildPath(coredumpDir.getTargetPath(),
                 coredumpDir.coredumps[coreNum].generateCoredumpName());
     }
 
     /// Return path to the executable
-    string getExePath(in uint coreNum) const
+    string getExePath(in uint coreNum) const @safe
     {
         return buildPath(coredumpDir.coredumps[coreNum].exePath);
     }

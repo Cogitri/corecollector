@@ -63,7 +63,7 @@ class Coredump
 
     /// ctor to construct a `Coredump`
     this(in long uid, in long gid, in long pid, in long sig, in SysTime timestamp,
-            in string exe, in string exePath) pure nothrow
+            in string exe, in string exePath) pure nothrow @safe
     {
         this.uid = uid;
         this.pid = pid;
@@ -75,7 +75,7 @@ class Coredump
     }
 
     /// ctor to construct a `Coredump` from a JSON value
-    this(in JSONValue json)
+    this(in JSONValue json) @safe
     {
         tracef("Constructing Coredump from JSON: %s", json);
 
@@ -88,7 +88,7 @@ class Coredump
     }
 
     /// Generate a unique filename for a coredump.
-    final string generateCoredumpName() const
+    final string generateCoredumpName() const @safe
     {
         auto filename = this.exe ~ "-" ~ this.sig.to!string ~ "-"
             ~ this.pid.to!string ~ "-" ~ this.uid.to!string ~ "-"
@@ -99,7 +99,7 @@ class Coredump
     }
 
     /// Convert the `Coredump` to a `JSONValue`
-    JSONValue toJson() const
+    JSONValue toJson() const @safe
     {
         return JSONValue([
                 "exe": JSONValue(this.exe),
@@ -161,7 +161,7 @@ class CoredumpDir
     /// Wheter we want to do changes to the coredumpDir (corehelper) or not (corectl).
     immutable bool readOnly = false;
 
-    private this()
+    private this() @safe
     {
         this.coredumps = new Coredump[0];
     }
