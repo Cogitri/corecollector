@@ -37,7 +37,7 @@ int main(string[] args)
     // Use /dev/null here, since we do log calls in Configuration's constructor
     // Once we have constructed the Configuration we re-run this with the proper log
     // path
-    setupLogging(LogLevel.trace, File("/dev/null", "w"));
+    setupLogging(LogLevel.warning, File("/dev/null", "w"));
 
     Configuration conf;
 
@@ -51,7 +51,7 @@ int main(string[] args)
         return 1;
     }
 
-    setupLogging(LogLevel.trace, File(conf.logPath, "w"));
+    setupLogging(LogLevel.warning, File(conf.logPath, "w"));
 
     const auto options = new Options(args);
 
