@@ -15,8 +15,6 @@ subdir('corectl')
 
 subdir('corehelper')
 
-subdir('corehelpersetup')
-
 install_subdir(
     'corecollector',
     install_dir: include_dir,
