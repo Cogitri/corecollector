@@ -79,6 +79,9 @@ class Configuration
             case "targetpath":
                 this.targetPath = strip(text(keyValueArr[1]));
                 break;
+            case "logpath":
+                this.logPath = strip(text(keyValueArr[1]));
+                break;
             default:
                 errorf("Unknown configuration key '%s'!", keyValueArr[0]);
                 assert(0);
