@@ -48,46 +48,45 @@ Application Options (All of these NEED to be specified):
 /// CLI arguments passed to this binary, usually by the kernel
 class Options
 {
-    /// Print the `helpText`.
-    bool showHelp;
-    /// Print the version.
-    bool showVersion;
-    /// The string of the exe.
-    string exe;
-    /// The path of the exe.
-    string exePath;
-    /// The pid of the program.
-    long pid;
-    /// The uid of the user running the program.
-    long uid;
-    /// The gid of the group running the program.
-    long gid;
-    /// The signal with which the program terminated.
-    long signal;
-    /// The timestamp of when the program crashed.
-    long timestamp;
+  /// Print the `helpText`.
+  bool showHelp;
+  /// Print the version.
+  bool showVersion;
+  /// The string of the exe.
+  string exe;
+  /// The path of the exe.
+  string exePath;
+  /// The pid of the program.
+  long pid;
+  /// The uid of the user running the program.
+  long uid;
+  /// The gid of the group running the program.
+  long gid;
+  /// The signal with which the program terminated.
+  long signal;
+  /// The timestamp of when the program crashed.
+  long timestamp;
 
-    this(string[] args)
-    {
-        getopt(args, "help|h", &this.showHelp, "version|v", &this.showVersion,
-                std.getopt.config.required, "e|exe-name", &this.exe,
-                std.getopt.config.required, "x|exe-path", &this.exePath,
-                std.getopt.config.required, "p|pid", &this.pid,
-                std.getopt.config.required, "u|uid", &this.uid,
-                std.getopt.config.required, "g|gid", &this.gid,
-                std.getopt.config.required, "s|signal", &this.signal,
-                std.getopt.config.required, "t|timestamp", &this.timestamp);
-        tracef(
-                "Parsed options: exe: '%s', exePath: '%s, pid: '%d', uid: '%d', gid: '%d', singal: '%d', timestamp: '%d'",
-                this.exe, this.exePath, this.pid, this.uid, this.gid, this.signal, this.timestamp);
-    }
+  this(string[] args) @safe
+  {
+    getopt(args, "help|h", &this.showHelp, "version|v", &this.showVersion,
+        std.getopt.config.required, "e|exe-name", &this.exe,
+        std.getopt.config.required, "x|exe-path", &this.exePath,
+        std.getopt.config.required, "p|pid", &this.pid,
+        std.getopt.config.required, "u|uid", &this.uid,
+        std.getopt.config.required, "g|gid", &this.gid,
+        std.getopt.config.required, "s|signal", &this.signal,
+        std.getopt.config.required, "t|timestamp", &this.timestamp);
+    tracef("Parsed options: exe: '%s', exePath: '%s, pid: '%d', uid: '%d', gid: '%d', singal: '%d', timestamp: '%d'",
+        this.exe, this.exePath, this.pid, this.uid, this.gid, this.signal, this.timestamp);
+  }
 
-    /// Convert a `Options` to a `Coredump`
-    Coredump toCoredump() const
-    {
-        // The kernel sends `!` instead of `/`: http://man7.org/linux/man-pages/man5/core.5.html
-        auto slashPath = this.exePath.replace("!", "/");
-        SysTime dTime = unixTimeToStdTime(this.timestamp);
-        return new Coredump(this.uid, this.gid, this.pid, this.signal, dTime, this.exe, slashPath);
-    }
+  /// Convert a `Options` to a `Coredump`
+  Coredump toCoredump() const @safe
+  {
+    // The kernel sends `!` instead of `/`: http://man7.org/linux/man-pages/man5/core.5.html
+    auto slashPath = this.exePath.replace("!", "/");
+    SysTime dTime = unixTimeToStdTime(this.timestamp);
+    return new Coredump(this.uid, this.gid, this.pid, this.signal, dTime, this.exe, slashPath);
+  }
 }

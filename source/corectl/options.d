@@ -55,7 +55,7 @@ class Options
     string mode;
     string file;
 
-    this(string[] args)
+    this(string[] args) @safe
     {
         getopt(args, "help|h", &showHelp, "version|v", &showVersion, "debug|d", &debugLevel);
 

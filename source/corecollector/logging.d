@@ -40,7 +40,7 @@ class SyslogLogger : FileLogger
     this(LogLevel lv, File logFile) @trusted
     {
         super(logFile, lv);
-        openlog("corecollector", LOG_ODELAY, LOG_DAEMON);
+        openlog("corecollector", LOG_NDELAY, LOG_DAEMON);
     }
 
     /// Write the log message to both stderr and syslog. Doesn't log if
@@ -50,6 +50,7 @@ class SyslogLogger : FileLogger
         super.writeLogMsg(payload);
         if (this.logLevel != LogLevel.off)
         {
+            writeln("Log!");
             syslog(toSyslogLevel(payload.logLevel), payload.msg.toStringz);
         }
     }
@@ -79,7 +80,7 @@ class SyslogLogger : FileLogger
 }
 
 /// Setup the logging with the supplied logging level.
-void setupLogging(const LogLevel l, File logFile)
+void setupLogging(const LogLevel l, File logFile) @safe
 {
     sharedLog = new SyslogLogger(l, logFile);
 }
