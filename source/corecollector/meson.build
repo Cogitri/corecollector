@@ -20,13 +20,13 @@ core_lib = library(
     soversion: project_soversion,
     d_module_versions: d_mod_version,
     include_directories: src_inc,
-    link_args: ['-shared', '-link-defaultlib-shared'],
+    link_args: ['-shared', link_runtime_shared_arg],
 )
 
 core_lib_dep = declare_dependency(
     link_with: core_lib,
     include_directories: src_inc,
-    link_args: '-link-defaultlib-shared',
+    link_args: link_runtime_shared_arg,
 )
 
 pkgc.generate(
@@ -41,7 +41,7 @@ core_lib_test_exe = executable(
     [lib_src, 'tests/main.d'],
     d_unittest: true,
     include_directories: src_inc,
-    link_args: '-link-defaultlib-shared',
+    link_args: link_runtime_shared_arg,
 )
 
 test(
