@@ -94,7 +94,7 @@ class Coredump
             ~ this.pid.to!string ~ "-" ~ this.uid.to!string ~ "-"
             ~ this.gid.to!string ~ "-" ~ this.timestamp.toISOString;
         auto filenameFinal = filename ~ sha1UUID(filename).to!string;
-        tracef("Generated filename for coredump %s: %s", this, filenameFinal);
+        tracef("Generated filename for coredump '%s'", filenameFinal);
         return filenameFinal;
     }
 
