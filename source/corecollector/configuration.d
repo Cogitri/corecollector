@@ -53,6 +53,8 @@ class Configuration
     string targetPath = coredumpPath;
     /// Where to log to
     string logPath = "/var/log/corecollector.log";
+    /// The maximum size of the corecollector dir
+    ulong maxDirSize = 0;
 
     /// Construct a `Configuration` by supplying the `configPath`. You might want
     /// to supply the `configPath` which is defined in this module.
@@ -81,6 +83,9 @@ class Configuration
                 break;
             case "logpath":
                 this.logPath = strip(text(keyValueArr[1]));
+                break;
+            case "maxdirsize":
+                this.maxDirSize = strip(text(keyValueArr[1])).to!ulong;
                 break;
             default:
                 errorf("Unknown configuration key '%s'!", keyValueArr[0]);

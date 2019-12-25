@@ -86,7 +86,7 @@ class CoreHelper
     /// Write the coredump to the `CoredumpDir`
     int writeCoredump()
     {
-        auto coredumpDir = new CoredumpDir(this.config.targetPath, false);
+        auto coredumpDir = new CoredumpDir(this.config.targetPath, false, this.config.maxDirSize);
 
         auto corecollectorUid = getUid();
         auto corecollectorGid = getGid();
@@ -98,6 +98,7 @@ class CoreHelper
         try
         {
             coredumpDir.addCoredump(this.coredump);
+            coredumpDir.rotateDir();
             coredumpDir.writeConfig();
             return 0;
         }
