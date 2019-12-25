@@ -153,13 +153,17 @@ class NoPermsCoredumpDir : Exception
 /// The `CoredumpDir` holds information about all collected `Coredump`s
 class CoredumpDir
 {
-    /// All known `Coredump`s
-    Coredump[] coredumps;
     private string targetPath;
     /// The name of the configuration file in which data about the coredumps is saved.
     immutable configName = "coredumps.json";
     /// Wheter we want to do changes to the coredumpDir (corehelper) or not (corectl).
     immutable bool readOnly = false;
+    /// All known `Coredump`s
+    Coredump[] coredumps;
+    /// The size of the CoredumpDir. Measured in KByte.
+    ulong dirSize;
+    /// The maximum size of the CoredumpDir. Measued in KByte.
+    ulong maxDirSize;
 
     private this() @safe
     {
@@ -174,10 +178,19 @@ class CoredumpDir
         {
             coredumps ~= new Coredump(x);
         }
+        try
+        {
+            this.dirSize = json["dirSize"].integer;
+        }
+        // FIXME: For some reason dirSize is sometimes interpreted as integer, sometimes as uinteger, although it's always positive.
+        catch (JSONException)
+        {
+            this.dirSize = json["dirSize"].uinteger;
+        }
     }
 
     /// ctor to construct a `CoredumpDir` from a `targetPath` in which a `coredumps.json` is contained
-    this(in string targetPath, bool readOnly)
+    this(in string targetPath, in bool readOnly)
     {
         this.readOnly = readOnly;
         this.targetPath = targetPath;
@@ -191,11 +204,21 @@ class CoredumpDir
         this(coredump_json);
     }
 
+    /// ctor to construct a `CoredumpDir` from a `targetPath` in which a `coredumps.json` is contained.
+    /// Also specify how big the `CoredumpDir` may get, 0 meaning no limit.
+    this(in string targetPath, in bool readOnly, in ulong maxDirSize)
+    {
+        this.maxDirSize = maxDirSize;
+        this(targetPath, readOnly);
+    }
+
     /// Convert the `CoredumpDir` to a `JSONValue`
     JSONValue toJson() const
     {
         return JSONValue([
-                "coredumps": JSONValue(this.coredumps.map!(p => p.toJson).array)
+                "coredumps": JSONValue(this.coredumps.map!(p => p.toJson)
+                    .array),
+                "dirSize": JSONValue(this.dirSize),
                 ]);
     }
 
@@ -219,6 +242,35 @@ class CoredumpDir
         foreach (ubyte[] buffer; stdin.byChunk(new ubyte[4096]))
         {
             target.rawWrite(buffer);
+        }
+
+        this.dirSize += getSize(coredumpPath) / 1000;
+    }
+
+    /// Check if the dir is bigger than the maxDirSize specified by the user and if so, delete old
+    /// coredumps.
+    void rotateDir()
+    {
+        if (this.maxDirSize != 0)
+        {
+            tracef("Maximum dir size is %d, current dir size is %d", this.maxDirSize, this.dirSize);
+            this.coredumps.sort!("a.timestamp < b.timestamp");
+            const auto arrLen = this.coredumps.length;
+            // Time to clean up a bit!
+            while (this.dirSize > this.maxDirSize)
+            {
+                // Can't remove coredumps if there are none.
+                if (this.coredumps.length == 0)
+                {
+                    break;
+                }
+                const auto oldCoredump = this.coredumps[0];
+                const auto corePath = buildPath(this.targetPath, oldCoredump.generateCoredumpName());
+                // In KByte
+                this.dirSize -= getSize(corePath) / 1000;
+                remove(corePath);
+                this.coredumps = this.coredumps.remove(0);
+            }
         }
     }
 
@@ -256,7 +308,7 @@ class CoredumpDir
                     format("Failed to chown path %s due to error %d", this.targetPath, errno));
             errnoEnforce(chmod(this.targetPath.toStringz, octal!(750)) == 0,
                     format("Failed to chmod path %s due to error %d", this.targetPath, errno));
-            immutable auto defaultConfig = `{"coredumps": [], "targetPath": "`
+            immutable auto defaultConfig = `{"dirSize": 0, "coredumps": [], "targetPath": "`
                 ~ this.targetPath ~ `"}` ~ "\n";
             this.writeConfig(defaultConfig);
             errnoEnforce(chown(configPath.toStringz, getUid(), getGid()) == 0,
@@ -321,7 +373,7 @@ unittest
     coredumpDir.coredumps ~= core1;
     coredumpDir.coredumps ~= core2;
 
-    auto validString = `{"coredumps": [{"exe":"test","exePath":"\/usr\/bin\/","filename":"","gid":1,"pid":1,"sig":1, "timestamp":"00010101T005328.000197","uid":1}, {"exe":"test","exePath":"\/usr\/bin\/","filename":"","gid":1,"pid":1,"sig":1,"timestamp":"00010101T005328.0001971","uid":1}]}`;
+    auto validString = `{"coredumps": [{"exe":"test","exePath":"\/usr\/bin\/","filename":"","gid":1,"pid":1,"sig":1, "timestamp":"00010101T005328.000197","uid":1}, {"exe":"test","exePath":"\/usr\/bin\/","filename":"","gid":1,"pid":1,"sig":1,"timestamp":"00010101T005328.0001971","uid":1}], "dirSize": 0}`;
     auto validJSON = parseJSON(validString);
     auto generatedJSON = coredumpDir.toJson();
     assert(generatedJSON == validJSON, format("Expected %s, got %s", validJSON, generatedJSON));

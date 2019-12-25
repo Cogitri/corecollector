@@ -8,3 +8,7 @@ maxSize = 0
 targetPath = @COREDUMP_PATH@
 # Where to log to. Pass /dev/null to only log to syslog
 logPath = /var/log/corecollector.log
+# The maximum size of the coredumpdir.
+# Unset or set to 0 to set no size limit.
+# Measured in KByte, must be whole numbers.
+maxDirSize = 0
