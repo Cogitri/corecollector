@@ -388,3 +388,13 @@ unittest
             format("Expected %s, got %s", coredumpDir.coredumps[1].timestamp,
                 coredumpDirParsed.coredumps[1].timestamp));
 }
+
+unittest
+{
+    const auto core = new Coredump(1000, 1000, 1000, 6,
+            SysTime.fromUnixTime(1), "exe", "/usr/bin");
+    auto generatedName = core.generateCoredumpName();
+    auto expectedVal = "exe-6-1000-1000-1000-19700101T0100019d12f04e-8945-5bbc-acb1-cf4d457dbe21";
+    assert(expectedVal == generatedName, format("Expected %s, got %s",
+            expectedVal, generatedName));
+}
