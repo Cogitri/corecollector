@@ -16,7 +16,7 @@ prefix = get_option('prefix')
 libexec_dir = join_paths(prefix, get_option('libexecdir'), 'corecollector')
 varlib_dir = join_paths(prefix, get_option('localstatedir'), 'lib', 'corecollector')
 sysconf_dir = join_paths(prefix, get_option('sysconfdir'), 'corecollector')
-sysctl_dir = join_paths(prefix, get_option('sysconfdir'), 'sysctl.d')
+sysctl_dir = join_paths(prefix, get_option('libdir'), 'sysctl.d')
 include_dir = join_paths(prefix, get_option('includedir'), 'd', 'corecollector')
 
 vcs_tag = run_command('git', 'rev-parse', '--short', 'HEAD').stdout().strip()
