@@ -38,10 +38,10 @@ pkgc.generate(
 
 core_lib_test_exe = executable(
     'core-lib-text-exe',
-    [lib_src, 'tests/main.d'],
+    lib_src,
     d_unittest: true,
     include_directories: src_inc,
-    link_args: link_runtime_shared_arg,
+    link_args: [link_runtime_shared_arg, '-main'],
 )
 
 test(
