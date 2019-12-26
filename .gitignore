@@ -3,3 +3,10 @@
 /.vscode/**
 /install/**
 /build/**
+
+# dub
+/**/.dub
+source/corecollector/libcorecollector.a
+source/corecollector/corecollector-test-library
+source/corectl/corectl
+source/corehelper/corehelper

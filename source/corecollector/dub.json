@@ -1,0 +1,16 @@
+{
+	"name": "corecollector",
+	"description": "A coredump collector written in D.",
+	"homepage": "https://github.com/Cogitri/corecollector",
+	"authors": [
+		"Rasmus Thomsen <oss@cogitri.dev>"
+	],
+    "license": "GPL-3.0",
+    "targetType": "library",
+    "sourcePaths": [
+        "."
+    ],
+    "importPaths": [
+        "../"
+    ]
+}

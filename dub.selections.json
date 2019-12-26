@@ -1,0 +1,8 @@
+{
+	"fileVersion": 1,
+	"versions": {
+		"corecollector": {"path":"source/corecollector"},
+		"corectl": {"path":"source/corectl"},
+		"corehelper": {"path":"source/corehelper"}
+	}
+}
