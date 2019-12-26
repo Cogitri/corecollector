@@ -28,7 +28,7 @@ import std.stdio;
 immutable helpText = "
 Usage:
   corectl <subcommand> [OPTION...]
-  
+
 List and interact with coredumps
 
 Subcommands:
@@ -37,7 +37,7 @@ Subcommands:
                       Defaults to 'stdout'.
   info [ID]         - Get more detailed information for the coredump identified by ID.
   list              - List all available coredumps.
-  
+
 Help Options:
   -h, --help         - Show help options.
 
@@ -105,12 +105,12 @@ class Options
             }
             else
             {
-                assert(0, "Expected either ID or ID and file to dump to for subcommand");
+                enforce(0, "Expected either ID or ID and file to dump to for subcommand");
             }
 
             break;
         default:
-            assert(0, format("Unknown subcommand %s", this.mode));
+            enforce(0, format("Unknown subcommand %s", this.mode));
         }
     }
 }
