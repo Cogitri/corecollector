@@ -345,11 +345,11 @@ unittest
 {
     import std.format : format;
 
-    auto core = new Coredump(1000, 1000, 14_948, 6, SysTime(1_574_450_085),
-            "Xwayland", "/usr/bin/");
+    auto core = new Coredump(1000, 1000, 14_948, 6,
+            SysTime.fromISOExtString("2018-01-01T10:30:00Z"), "Xwayland", "/usr/bin/");
 
     auto validString = `{"exe":"Xwayland","exePath":"\/usr\/bin\/","filename":"",`
-        ~ `"gid":1000,"pid":14948,"sig":6,"timestamp":"00010101T005605.4450085","uid":1000}`;
+        ~ `"gid":1000,"pid":14948,"sig":6,"timestamp":"20180101T103000Z","uid":1000}`;
     auto validJSON = parseJSON(validString);
     auto generatedJSON = core.toJson();
     assert(generatedJSON == validJSON, format("Expected %s, got %s", validJSON, generatedJSON));
@@ -367,13 +367,15 @@ unittest
 {
     import std.format : format;
 
-    auto core1 = new Coredump(1, 1, 1, 1, SysTime(1970), "test", "/usr/bin/");
-    auto core2 = new Coredump(1, 1, 1, 1, SysTime(1971), "test", "/usr/bin/");
+    auto core1 = new Coredump(1, 1, 1, 1,
+            SysTime.fromISOExtString("2018-01-01T11:30:00Z"), "test", "/usr/bin/");
+    auto core2 = new Coredump(1, 1, 1, 1,
+            SysTime.fromISOExtString("2018-01-01T10:30:00Z"), "test", "/usr/bin/");
     auto coredumpDir = new CoredumpDir();
     coredumpDir.coredumps ~= core1;
     coredumpDir.coredumps ~= core2;
 
-    auto validString = `{"coredumps": [{"exe":"test","exePath":"\/usr\/bin\/","filename":"","gid":1,"pid":1,"sig":1, "timestamp":"00010101T005328.000197","uid":1}, {"exe":"test","exePath":"\/usr\/bin\/","filename":"","gid":1,"pid":1,"sig":1,"timestamp":"00010101T005328.0001971","uid":1}], "dirSize": 0}`;
+    auto validString = `{"coredumps": [{"exe":"test","exePath":"\/usr\/bin\/","filename":"","gid":1,"pid":1,"sig":1, "timestamp":"20180101T113000Z","uid":1}, {"exe":"test","exePath":"\/usr\/bin\/","filename":"","gid":1,"pid":1,"sig":1,"timestamp": "20180101T103000Z","uid":1}], "dirSize": 0}`;
     auto validJSON = parseJSON(validString);
     auto generatedJSON = coredumpDir.toJson();
     assert(generatedJSON == validJSON, format("Expected %s, got %s", validJSON, generatedJSON));
@@ -392,9 +394,9 @@ unittest
 unittest
 {
     const auto core = new Coredump(1000, 1000, 1000, 6,
-            SysTime.fromUnixTime(1), "exe", "/usr/bin");
+            SysTime.fromISOExtString("2018-01-01T10:30:00Z"), "exe", "/usr/bin");
     auto generatedName = core.generateCoredumpName();
-    auto expectedVal = "exe-6-1000-1000-1000-19700101T0100019d12f04e-8945-5bbc-acb1-cf4d457dbe21";
+    auto expectedVal = "exe-6-1000-1000-1000-20180101T103000Z9f09102d-468d-5b63-82d2-d4ecf41e0d41";
     assert(expectedVal == generatedName, format("Expected %s, got %s",
             expectedVal, generatedName));
 }
