@@ -29,4 +29,11 @@ jobs:
         run: meson build && ninja -C build
 
       - name: Run dub tests
-        run: dub test corecollector
+        run: dub test -b unittest-cov corecollector
+
+      - name: Upload Codecoverage
+        uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: unittests
+          fail_ci_if_error: true
