@@ -54,28 +54,28 @@ class SyslogLogger : FileLogger
             syslog(toSyslogLevel(payload.logLevel), payload.msg.toStringz);
         }
     }
+}
 
-    /// Convert an enum to the respective syslog log level.
-    auto toSyslogLevel(LogLevel lv)
+/// Convert an enum to the respective syslog log level.
+auto toSyslogLevel(LogLevel lv)
+{
+    final switch (lv) with (LogLevel)
     {
-        final switch (lv) with (LogLevel)
-        {
-        case trace:
-        case all:
-            return LOG_DEBUG;
-        case info:
-            return LOG_INFO;
-        case warning:
-            return LOG_WARNING;
-        case error:
-            return LOG_ERR;
-        case critical:
-            return LOG_CRIT;
-        case fatal:
-            return LOG_ALERT;
-        case off:
-            assert(0);
-        }
+    case trace:
+    case all:
+        return LOG_DEBUG;
+    case info:
+        return LOG_INFO;
+    case warning:
+        return LOG_WARNING;
+    case error:
+        return LOG_ERR;
+    case critical:
+        return LOG_CRIT;
+    case fatal:
+        return LOG_ALERT;
+    case off:
+        assert(0);
     }
 }
 
@@ -83,4 +83,31 @@ class SyslogLogger : FileLogger
 void setupLogging(const LogLevel l, File logFile) @safe
 {
     sharedLog = new SyslogLogger(l, logFile);
+}
+
+unittest {
+    assert(LOG_DEBUG == toSyslogLevel(LogLevel.trace));
+    assert(LOG_DEBUG == toSyslogLevel(LogLevel.all));
+    assert(LOG_INFO == toSyslogLevel(LogLevel.info));
+    assert(LOG_WARNING == toSyslogLevel(LogLevel.warning));
+    assert(LOG_ERR == toSyslogLevel(LogLevel.error));
+    assert(LOG_CRIT == toSyslogLevel(LogLevel.critical));
+    assert(LOG_ALERT == toSyslogLevel(LogLevel.fatal));
+}
+
+unittest {
+    import std.algorithm : count;
+    import std.file : deleteme, readText, remove;
+
+    const auto testLogPath = deleteme();
+    scope (exit)
+        remove(testLogPath);
+
+    setupLogging(LogLevel.info, File(testLogPath, "w"));
+    trace("trace");
+    error("error");
+    immutable auto expectedVal = 1;
+    const auto logFileNumLines = readText(testLogPath).count('\n');
+    assert(expectedVal == logFileNumLines,
+        format("Expected %d, got %d", expectedVal, logFileNumLines));
 }
