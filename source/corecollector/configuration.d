@@ -108,6 +108,8 @@ unittest
     immutable auto testConfig = import("configTest01.conf");
     auto testConfigPath = deleteme();
     auto configFile = File(testConfigPath, "w");
+    scope (exit)
+        remove(testConfigPath);
     configFile.write(testConfig);
     configFile.close();
     auto configTest = new Configuration(testConfigPath);
@@ -126,6 +128,8 @@ unittest
     immutable auto testConfig = import("configTest02.conf");
     auto testConfigPath = deleteme();
     auto configFile = File(testConfigPath, "w");
+    scope (exit)
+        remove(testConfigPath);
     configFile.write(testConfig);
     configFile.close();
     auto configTest = new Configuration(testConfigPath);
