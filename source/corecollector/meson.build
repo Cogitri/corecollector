@@ -41,6 +41,7 @@ core_lib_test_exe = executable(
     lib_src,
     d_unittest: true,
     include_directories: src_inc,
+    d_args: '-J' + join_paths(meson.current_source_dir(), 'views'),
     link_args: [link_runtime_shared_arg, '-main'],
 )
 

@@ -31,7 +31,7 @@ import std.stdio;
 import std.string;
 
 /// Path to where the configuration file is located at
-immutable configPath = buildPath(confPath, "corecollector.conf");
+immutable auto configPath = buildPath(confPath, "corecollector.conf");
 
 class ConfigurationException : Exception
 {
@@ -56,9 +56,14 @@ class Configuration
     /// The maximum size of the corecollector dir
     ulong maxDirSize = 0;
 
-    /// Construct a `Configuration` by supplying the `configPath`. You might want
-    /// to supply the `configPath` which is defined in this module.
+    /// Construct a `Configuration` with the default `configPath`
     this()
+    {
+        this(configPath);
+    }
+
+    /// Construct a `Configuration` by supplying the `configPath`.
+    this(in string configPath)
     {
         tracef("Loading configuration from path %s.", configPath);
         auto configFile = File(configPath, "r");
@@ -70,28 +75,66 @@ class Configuration
                 continue;
             }
             auto keyValueArr = lineWithoutWhitespace.split('=');
+
+            // Allow comments after the value, e.g. 'val = something # comment'
+            const auto val = strip(text(keyValueArr[1]).split('#')[0]);
+
             switch (strip(text(keyValueArr[0])))
             {
             case "compression":
-                this.compression = strip(text(keyValueArr[1]));
+                this.compression = val;
                 break;
             case "maxsize":
-                this.maxSize = strip(text(keyValueArr[1])).to!uint;
+                this.maxSize = val.to!uint;
                 break;
             case "targetpath":
-                this.targetPath = strip(text(keyValueArr[1]));
+                this.targetPath = val;
                 break;
             case "logpath":
-                this.logPath = strip(text(keyValueArr[1]));
+                this.logPath = val;
                 break;
             case "maxdirsize":
-                this.maxDirSize = strip(text(keyValueArr[1])).to!ulong;
+                this.maxDirSize = val.to!ulong;
                 break;
             default:
-                errorf("Unknown configuration key '%s'!", keyValueArr[0]);
-                assert(0);
+                enforce(0, "Unknown configuration key '%s'!", val);
             }
         }
-        tracef("Configuration: %s", this);
     }
+}
+
+unittest
+{
+    immutable auto testConfig = import("configTest01.conf");
+    auto testConfigPath = deleteme();
+    auto configFile = File(testConfigPath, "w");
+    configFile.write(testConfig);
+    configFile.close();
+    auto configTest = new Configuration(testConfigPath);
+    assert(configTest.compression == "none", format("Expected %s, got %s",
+            "none", configTest.compression));
+    assert(configTest.maxSize == 0, format("Expected %d, got %d", 0, configTest.maxSize));
+    assert(configTest.targetPath == "test", format("Expected %s, got %s",
+            "test", configTest.targetPath));
+    assert(configTest.logPath == "/var/log/corecollector.log",
+            format("Expected %s, got %s", "/var/log/corecollector.log", configTest.logPath));
+    assert(configTest.maxDirSize == 0, format("Expected %d, got %d", 0, configTest.maxDirSize));
+}
+
+unittest
+{
+    immutable auto testConfig = import("configTest02.conf");
+    auto testConfigPath = deleteme();
+    auto configFile = File(testConfigPath, "w");
+    configFile.write(testConfig);
+    configFile.close();
+    auto configTest = new Configuration(testConfigPath);
+    assert(configTest.compression == "none", format("Expected %s, got %s",
+            "none", configTest.compression));
+    assert(configTest.maxSize == 0, format("Expected %d, got %d", 0, configTest.maxSize));
+    assert(configTest.targetPath == "test", format("Expected %s, got %s",
+            "test", configTest.targetPath));
+    assert(configTest.logPath == "/var/log/corecollector.log",
+            format("Expected %s, got %s", "/var/log/corecollector.log", configTest.logPath));
+    assert(configTest.maxDirSize == 0, format("Expected %d, got %d", 0, configTest.maxDirSize));
 }
