@@ -85,7 +85,8 @@ void setupLogging(const LogLevel l, File logFile) @safe
     sharedLog = new SyslogLogger(l, logFile);
 }
 
-unittest {
+unittest
+{
     assert(LOG_DEBUG == toSyslogLevel(LogLevel.trace));
     assert(LOG_DEBUG == toSyslogLevel(LogLevel.all));
     assert(LOG_INFO == toSyslogLevel(LogLevel.info));
@@ -95,7 +96,8 @@ unittest {
     assert(LOG_ALERT == toSyslogLevel(LogLevel.fatal));
 }
 
-unittest {
+unittest
+{
     import std.algorithm : count;
     import std.file : deleteme, readText, remove;
 
@@ -108,6 +110,6 @@ unittest {
     error("error");
     immutable auto expectedVal = 1;
     const auto logFileNumLines = readText(testLogPath).count('\n');
-    assert(expectedVal == logFileNumLines,
-        format("Expected %d, got %d", expectedVal, logFileNumLines));
+    assert(expectedVal == logFileNumLines, format("Expected %d, got %d",
+            expectedVal, logFileNumLines));
 }

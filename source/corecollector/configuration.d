@@ -33,7 +33,15 @@ import std.string;
 /// Path to where the configuration file is located at
 immutable auto configPath = buildPath(confPath, "corecollector.conf");
 
-class ConfigurationException : Exception
+class MissingFileConfigurationException : Exception
+{
+    this(string msg, string file = __FILE__, size_t line = __LINE__)
+    {
+        super(msg, file, line);
+    }
+}
+
+class UnknownKeyConfigurationException : Exception
 {
     this(string msg, string file = __FILE__, size_t line = __LINE__)
     {
@@ -65,6 +73,11 @@ class Configuration
     /// Construct a `Configuration` by supplying the `configPath`.
     this(in string configPath)
     {
+        if (!configPath.exists())
+        {
+            throw new MissingFileConfigurationException(
+                    format("Configuration path '%s' doesn't exist!", configPath));
+        }
         tracef("Loading configuration from path %s.", configPath);
         auto configFile = File(configPath, "r");
         foreach (line; configFile.byLine())
@@ -97,7 +110,7 @@ class Configuration
                 this.maxDirSize = val.to!ulong;
                 break;
             default:
-                enforce(0, "Unknown configuration key '%s'!", val);
+                enforce!UnknownKeyConfigurationException(0, "Unknown configuration key '%s'!", val);
             }
         }
     }
@@ -141,4 +154,22 @@ unittest
     assert(configTest.logPath == "/var/log/corecollector.log",
             format("Expected %s, got %s", "/var/log/corecollector.log", configTest.logPath));
     assert(configTest.maxDirSize == 0, format("Expected %d, got %d", 0, configTest.maxDirSize));
+}
+
+unittest
+{
+    auto testConfigPath = deleteme();
+    assertThrown!MissingFileConfigurationException(new Configuration(testConfigPath));
+}
+
+unittest
+{
+    immutable auto testConfig = "unknownKey = unknownValue";
+    auto testConfigPath = deleteme();
+    auto configFile = File(testConfigPath, "w");
+    scope (exit)
+        remove(testConfigPath);
+    configFile.write(testConfig);
+    configFile.close();
+    assertThrown!UnknownKeyConfigurationException(new Configuration(testConfigPath));
 }

@@ -45,10 +45,13 @@ int main(string[] args)
     {
         conf = new Configuration();
     }
-    catch (ConfigurationException e)
+    catch (MissingFileConfigurationException e)
     {
-        errorf("Couldn't read configuration at path %s due to error %s\n", configPath, e);
-        return 1;
+        fatalf("%s", e);
+    }
+    catch (UnknownKeyConfigurationException e)
+    {
+        fatalf("Couldn't read configuration at path '%s' due to error: %s", configPath, e);
     }
 
     setupLogging(LogLevel.warning, File(conf.logPath, "w"));
