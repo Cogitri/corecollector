@@ -59,11 +59,11 @@ class Coredump
     /// The UNIX timestamp at which the program crashed
     SysTime timestamp;
     /// The name under which we're going to save the coredump
-    private string filename;
+    const private string filename;
 
     /// ctor to construct a `Coredump`
     this(in long uid, in long gid, in long pid, in long sig, in SysTime timestamp,
-            in string exe, in string exePath) pure nothrow @safe
+            in string exe, in string exePath) @safe
     {
         this.uid = uid;
         this.pid = pid;
@@ -72,6 +72,7 @@ class Coredump
         this.exe = exe;
         this.exePath = exePath;
         this.timestamp = timestamp;
+        this.filename = this.generateCoredumpName();
     }
 
     /// ctor to construct a `Coredump` from a JSON value
@@ -80,11 +81,8 @@ class Coredump
         tracef("Constructing Coredump from JSON: %s", json);
 
         SysTime time = std.datetime.SysTime.fromISOString(json["timestamp"].str);
-        auto core = this(json["uid"].integer, json["gid"].integer,
-                json["pid"].integer, json["sig"].integer, time,
-                json["exe"].str, json["exePath"].str);
-
-        core.filename = generateCoredumpName();
+        this(json["uid"].integer, json["gid"].integer, json["pid"].integer,
+                json["sig"].integer, time, json["exe"].str, json["exePath"].str);
     }
 
     /// Generate a unique filename for a coredump.
@@ -227,7 +225,6 @@ class CoredumpDir
     {
         tracef("Adding coredump '%s'", coredump);
         this.coredumps ~= coredump;
-
         auto coredumpPath = buildPath(this.targetPath, coredump.generateCoredumpName());
         auto target = File(coredumpPath, "w");
         scope (exit)
@@ -304,17 +301,25 @@ class CoredumpDir
             }
             infof("Config path '%s' doesn't exist, creating it and writing default config to it...",
                     configPath);
-            errnoEnforce(chown(this.targetPath.toStringz, getUid(), getGid()) == 0,
-                    format("Failed to chown path %s due to error %d", this.targetPath, errno));
-            errnoEnforce(chmod(this.targetPath.toStringz, octal!(750)) == 0,
-                    format("Failed to chmod path %s due to error %d", this.targetPath, errno));
             immutable auto defaultConfig = `{"dirSize": 0, "coredumps": [], "targetPath": "`
                 ~ this.targetPath ~ `"}` ~ "\n";
             this.writeConfig(defaultConfig);
-            errnoEnforce(chown(configPath.toStringz, getUid(), getGid()) == 0,
-                    format("Failed to chown path %s due to error %d", configPath, errno));
-            errnoEnforce(chmod(configPath.toStringz, octal!(640)) == 0,
-                    format("Failed to chmod path %s due to error %d", configPath, errno));
+
+            // We can't chown in the unittests since those run as unprivileged user.
+            version (unittest)
+            {
+            }
+            else
+            {
+                errnoEnforce(chown(configPath.toStringz, getUid(), getGid()) == 0,
+                        format("Failed to chown path %s due to error %d", configPath, errno));
+                errnoEnforce(chmod(configPath.toStringz, octal!(640)) == 0,
+                        format("Failed to chmod path %s due to error %d", configPath, errno));
+                errnoEnforce(chown(this.targetPath.toStringz, getUid(), getGid()) == 0,
+                        format("Failed to chown path %s due to error %d", this.targetPath, errno));
+                errnoEnforce(chmod(this.targetPath.toStringz, octal!(750)) == 0,
+                        format("Failed to chmod path %s due to error %d", this.targetPath, errno));
+            }
         }
     }
 
@@ -348,8 +353,7 @@ unittest
     auto core = new Coredump(1000, 1000, 14_948, 6,
             SysTime.fromISOExtString("2018-01-01T10:30:00Z"), "Xwayland", "/usr/bin/");
 
-    auto validString = `{"exe":"Xwayland","exePath":"\/usr\/bin\/","filename":"",`
-        ~ `"gid":1000,"pid":14948,"sig":6,"timestamp":"20180101T103000Z","uid":1000}`;
+    auto validString = `{"exe":"Xwayland","exePath":"\/usr\/bin\/","filename":"Xwayland-6-14948-1000-1000-20180101T103000Z993b67e4-7be8-5214-abd5-c26367a1167f", "gid":1000,"pid":14948,"sig":6,"timestamp":"20180101T103000Z","uid":1000}`;
     auto validJSON = parseJSON(validString);
     auto generatedJSON = core.toJson();
     assert(generatedJSON == validJSON, format("Expected %s, got %s", validJSON, generatedJSON));
@@ -375,7 +379,7 @@ unittest
     coredumpDir.coredumps ~= core1;
     coredumpDir.coredumps ~= core2;
 
-    auto validString = `{"coredumps": [{"exe":"test","exePath":"\/usr\/bin\/","filename":"","gid":1,"pid":1,"sig":1, "timestamp":"20180101T113000Z","uid":1}, {"exe":"test","exePath":"\/usr\/bin\/","filename":"","gid":1,"pid":1,"sig":1,"timestamp": "20180101T103000Z","uid":1}], "dirSize": 0}`;
+    auto validString = `{"coredumps": [{"exe":"test","exePath":"\/usr\/bin\/","filename":"test-1-1-1-1-20180101T113000Z210e5658-e54b-5bcb-ae8e-3fd0af836af6","gid":1,"pid":1,"sig":1, "timestamp":"20180101T113000Z","uid":1}, {"exe":"test","exePath":"\/usr\/bin\/","filename":"test-1-1-1-1-20180101T103000Z707194c0-a989-5a62-a7fa-6eb30f52647a","gid":1,"pid":1,"sig":1,"timestamp": "20180101T103000Z","uid":1}], "dirSize": 0}`;
     auto validJSON = parseJSON(validString);
     auto generatedJSON = coredumpDir.toJson();
     assert(generatedJSON == validJSON, format("Expected %s, got %s", validJSON, generatedJSON));
@@ -399,4 +403,58 @@ unittest
     auto expectedVal = "exe-6-1000-1000-1000-20180101T103000Z9f09102d-468d-5b63-82d2-d4ecf41e0d41";
     assert(expectedVal == generatedName, format("Expected %s, got %s",
             expectedVal, generatedName));
+}
+
+unittest
+{
+    auto corePath = deleteme();
+    mkdir(corePath);
+    scope (exit)
+        rmdirRecurse(corePath);
+
+    auto coredumpDir = new CoredumpDir(corePath, false);
+    assert(buildPath(corePath, "coredumps.json").exists());
+    assert(coredumpDir.targetPath == corePath);
+    assert(coredumpDir.dirSize == 0);
+}
+
+unittest
+{
+    // Setup stdin so this can we can read from it in addCoredump()
+    auto dummyDumpPath = deleteme();
+    scope (exit)
+        remove(dummyDumpPath);
+    immutable auto dummyCoredump = "coredump";
+    auto coredumpFile = File(dummyDumpPath, "w");
+    coredumpFile.write(dummyCoredump);
+    coredumpFile.close();
+    stdin.reopen(dummyDumpPath, "r");
+
+    auto corePath = deleteme() ~ "dir";
+    mkdir(corePath);
+    scope (exit)
+        rmdirRecurse(corePath);
+
+    auto coredump = new Coredump(1000, 1000, 1000, 6,
+            SysTime.fromISOExtString("2018-01-01T10:30:00Z"), "testExe", "!usr!bin!testExe");
+    coredump.generateCoredumpName();
+    auto coreFullPath = buildPath(corePath, coredump.generateCoredumpName());
+    auto coredumpDir = new CoredumpDir(corePath, false);
+    coredumpDir.addCoredump(coredump);
+    coredumpDir.writeConfig();
+    assert(coreFullPath.exists());
+    assert(readText(coreFullPath) == "coredump");
+
+    immutable auto expectedVal = `{"coredumps":[{"exe":"testExe","exePath":"!usr!bin!testExe","filename":"testExe-6-1000-1000-1000-20180101T103000Z27c207f9-f0cc-5b99-b1cd-3e83d1626218","gid":1000,"pid":1000,"sig":6,"timestamp":"20180101T103000Z","uid":1000}],"dirSize":0}`;
+    const auto configVal = readText(buildPath(corePath, "coredumps.json"));
+    assert(expectedVal == configVal, format("Expected %s, got %s", expectedVal, configVal));
+}
+
+unittest
+{
+    auto corePath = deleteme();
+    mkdir(corePath);
+    scope (exit)
+        rmdirRecurse(corePath);
+    auto coredumpDir = new CoredumpDir(corePath, false, 1);
 }
