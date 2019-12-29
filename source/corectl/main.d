@@ -92,7 +92,7 @@ int main(string[] args)
         return 1;
     }
 
-    auto coreCtl = new CoreCtl(cast(immutable) coreDir);
+    auto coreCtl = new CoreCtl(coreDir);
 
     switch (options.mode)
     {

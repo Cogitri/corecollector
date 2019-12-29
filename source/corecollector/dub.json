@@ -7,6 +7,12 @@
 	],
     "license": "GPL-3.0",
     "targetType": "library",
+    "configurations": [
+        {
+            "name": "unittest",
+            "versions": ["unittest_manual"]
+        }
+    ],
     "sourcePaths": [
         "."
     ],
