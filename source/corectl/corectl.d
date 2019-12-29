@@ -78,15 +78,7 @@ class CoreCtl
     /// Make sure the coredump exists. Starts counting from 0 being the first one.
     bool ensureCoredump(in uint coreNum) const @safe
     {
-        const auto len = coredumpDir.coredumps.length;
-        if (len == 0)
-        {
-            return false;
-        }
-        else
-        {
-            return (coredumpDir.coredumps.length - 1) >= coreNum;
-        }
+        return (coredumpDir.coredumps.length) >= coreNum + 1;
     }
 
     /// Return path to the coredump
@@ -162,39 +154,49 @@ class CoreCtl
     }
 }
 
+version (unittest)
+{
+    CoreCtl setupCoreCtl(string corePath)
+    {
+        auto savedStdin = new RestoreFd(stdin);
+
+        // Fix stdin and stdout again if things go south
+        scope (exit)
+        {
+            savedStdin.restoreFd(stdin);
+        }
+
+        // Setup stdin so we can read from it in addCoredump()
+        auto dummyDumpPath = deleteme() ~ "1";
+        scope (exit)
+            remove(dummyDumpPath);
+        immutable auto dummyCoredump = "coredump";
+        auto coredumpFile = File(dummyDumpPath, "w");
+        coredumpFile.write(dummyCoredump);
+        coredumpFile.close();
+        stdin.reopen(dummyDumpPath, "r");
+
+        mkdir(corePath);
+
+        auto coredump = new Coredump(1000, 1000, 1000, 6,
+                SysTime.fromISOExtString("2018-01-01T10:30:00Z"), "testExe", "/usr/bin/testExe");
+        auto coredumpDir = new CoredumpDir(corePath, false);
+        coredumpDir.addCoredump(coredump);
+        auto coreCtl = new CoreCtl(coredumpDir);
+        return coreCtl;
+    }
+}
+
 unittest
 {
-
-    auto savedStdin = new RestoreFd(stdin);
     auto savedStdout = new RestoreFd(stdout);
-
-    // Fix stdin and stdout again if things go south
     scope (exit)
-    {
-        savedStdin.restoreFd(stdin);
         savedStdout.restoreFd(stdout);
-    }
 
-    // Setup stdin so we can read from it in addCoredump()
-    auto dummyDumpPath = deleteme() ~ "1";
-    scope (exit)
-        remove(dummyDumpPath);
-    immutable auto dummyCoredump = "coredump";
-    auto coredumpFile = File(dummyDumpPath, "w");
-    coredumpFile.write(dummyCoredump);
-    coredumpFile.close();
-    stdin.reopen(dummyDumpPath, "r");
-
-    auto corePath = deleteme() ~ "dir";
-    mkdir(corePath);
+    const auto corePath = deleteme() ~ "dir";
+    auto coreCtl = setupCoreCtl(corePath);
     scope (exit)
         rmdirRecurse(corePath);
-
-    auto coredump = new Coredump(1000, 1000, 1000, 6,
-            SysTime.fromISOExtString("2018-01-01T10:30:00Z"), "testExe", "/usr/bin/testExe");
-    auto coredumpDir = new CoredumpDir(corePath, false);
-    coredumpDir.addCoredump(coredump);
-    auto coreCtl = new CoreCtl(coredumpDir);
 
     // Setup stdout so we can verify the output.
     auto dummyStdoutPath = deleteme() ~ "2";
@@ -209,4 +211,12 @@ unittest
         ~ "1   6        1000     1000     1000     2018-Jan-01 10:30:00Z /usr/bin/testExe\n";
     const auto actualVal = readText(dummyStdoutPath);
     assert(expectedVal == actualVal, format("Expected \n%s, got \n%s", expectedVal, actualVal));
+}
+
+unittest
+{
+    const auto corePath = deleteme() ~ "dir";
+    auto coreCtl = setupCoreCtl(corePath);
+    assert(coreCtl.ensureCoredump(0));
+    assert(!coreCtl.ensureCoredump(1));
 }
