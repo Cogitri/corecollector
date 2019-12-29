@@ -12,6 +12,16 @@
             "path": "../corecollector"
         }
     },
+    "configurations": [
+        {
+            "name": "unittest",
+            "subConfigurations": {
+                "corecollector": "unittest"
+            },
+            "excludedSourceFiles": ["main.d"],
+            "dflags": ["-main"]
+        }
+    ],
     "importPaths": [
         "../"
     ],
