@@ -50,7 +50,6 @@ class SyslogLogger : FileLogger
         super.writeLogMsg(payload);
         if (this.logLevel != LogLevel.off)
         {
-            writeln("Log!");
             syslog(toSyslogLevel(payload.logLevel), payload.msg.toStringz);
         }
     }
