@@ -161,3 +161,52 @@ class CoreCtl
                 coreNum + humansCountFromOne, getCorePath(coreNum));
     }
 }
+
+unittest
+{
+
+    auto savedStdin = new RestoreFd(stdin);
+    auto savedStdout = new RestoreFd(stdout);
+
+    // Fix stdin and stdout again if things go south
+    scope (exit)
+    {
+        savedStdin.restoreFd(stdin);
+        savedStdout.restoreFd(stdout);
+    }
+
+    // Setup stdin so we can read from it in addCoredump()
+    auto dummyDumpPath = deleteme() ~ "1";
+    scope (exit)
+        remove(dummyDumpPath);
+    immutable auto dummyCoredump = "coredump";
+    auto coredumpFile = File(dummyDumpPath, "w");
+    coredumpFile.write(dummyCoredump);
+    coredumpFile.close();
+    stdin.reopen(dummyDumpPath, "r");
+
+    auto corePath = deleteme() ~ "dir";
+    mkdir(corePath);
+    scope (exit)
+        rmdirRecurse(corePath);
+
+    auto coredump = new Coredump(1000, 1000, 1000, 6,
+            SysTime.fromISOExtString("2018-01-01T10:30:00Z"), "testExe", "/usr/bin/testExe");
+    auto coredumpDir = new CoredumpDir(corePath, false);
+    coredumpDir.addCoredump(coredump);
+    auto coreCtl = new CoreCtl(coredumpDir);
+
+    // Setup stdout so we can verify the output.
+    auto dummyStdoutPath = deleteme() ~ "2";
+    stdout.reopen(dummyStdoutPath, "w");
+
+    coreCtl.listCoredumps();
+
+    // So we can print stuff again and don't have to abuse stderr
+    savedStdout.restoreFd(stdout);
+
+    immutable auto expectedVal = "ID  SIGNAL   UID      GID      PID      TIMESTAMP             EXE\n"
+        ~ "1   6        1000     1000     1000     2018-Jan-01 10:30:00Z /usr/bin/testExe\n";
+    const auto actualVal = readText(dummyStdoutPath);
+    assert(expectedVal == actualVal, format("Expected \n%s, got \n%s", expectedVal, actualVal));
+}
