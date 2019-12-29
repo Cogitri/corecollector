@@ -8,5 +8,8 @@
 /**/.dub
 source/corecollector/libcorecollector.a
 source/corecollector/corecollector-test-library
+source/corecollector/corecollector-test-unittest
 source/corectl/corectl
+source/corectl/corectl-test-application
 source/corehelper/corehelper
+source/corehelper/corehelper-test-application
