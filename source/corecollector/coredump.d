@@ -306,7 +306,8 @@ class CoredumpDir
             this.writeConfig(defaultConfig);
 
             // We can't chown in the unittests since those run as unprivileged user.
-            version (unittest)
+            // Use `unittest_manual` instead of `unittest` here so we can set this in dub.json
+            version (unittest_manual)
             {
             }
             else
@@ -346,6 +347,55 @@ class CoredumpDir
     }
 }
 
+/// Helpers for the unittests
+version (unittest_manual)
+{
+    import core.stdc.stdio : fileno, fflush;
+    import core.sys.posix.unistd : dup, dup2;
+
+    /// Save a fd for later restoration, e.g. when you swap out stdout testing (e.g. check
+    /// if writeln() returns the right things), so you can use it properly once testing is over.
+    class RestoreFd
+    {
+        private int filenum;
+
+        /// ctor which saves the fileno of the fd to the class for later restauration
+        this(ref File fd)
+        {
+            this.filenum = dup(fileno(fd.getFP()));
+        }
+
+        /// Call `ffush()` on the fd and then swap it out for the saved fd.
+        void restoreFd(ref File fd)
+        {
+            auto fp = fd.getFP();
+            fflush(fp);
+            dup2(this.filenum, fileno(fp));
+        }
+    }
+}
+
+///
+unittest
+{
+    auto dummyStdoutPath = deleteme();
+    scope (exit)
+        remove(dummyStdoutPath);
+
+    auto savedStdout = new RestoreFd(stdout);
+
+    stdout.reopen(dummyStdoutPath, "w");
+
+    immutable auto expectedVal = "Writing this to a dummy file instead of stdout";
+    stdout.write(expectedVal);
+
+    savedStdout.restoreFd(stdout);
+    assert(readText(dummyStdoutPath) == expectedVal);
+
+    stdout.writeln("This isn't going to end up in the file");
+    assert(readText(dummyStdoutPath) == expectedVal);
+}
+
 unittest
 {
     import std.format : format;
@@ -357,7 +407,6 @@ unittest
     auto validJSON = parseJSON(validString);
     auto generatedJSON = core.toJson();
     assert(generatedJSON == validJSON, format("Expected %s, got %s", validJSON, generatedJSON));
-
     auto parsedCore = new Coredump(generatedJSON);
     assert(parsedCore.exe == core.exe);
     assert(parsedCore.uid == core.uid);
@@ -378,12 +427,10 @@ unittest
     auto coredumpDir = new CoredumpDir();
     coredumpDir.coredumps ~= core1;
     coredumpDir.coredumps ~= core2;
-
     auto validString = `{"coredumps": [{"exe":"test","exePath":"\/usr\/bin\/","filename":"test-1-1-1-1-20180101T113000Z210e5658-e54b-5bcb-ae8e-3fd0af836af6","gid":1,"pid":1,"sig":1, "timestamp":"20180101T113000Z","uid":1}, {"exe":"test","exePath":"\/usr\/bin\/","filename":"test-1-1-1-1-20180101T103000Z707194c0-a989-5a62-a7fa-6eb30f52647a","gid":1,"pid":1,"sig":1,"timestamp": "20180101T103000Z","uid":1}], "dirSize": 0}`;
     auto validJSON = parseJSON(validString);
     auto generatedJSON = coredumpDir.toJson();
     assert(generatedJSON == validJSON, format("Expected %s, got %s", validJSON, generatedJSON));
-
     auto coredumpDirParsed = new CoredumpDir(generatedJSON);
     assert(coredumpDirParsed.targetPath == coredumpDir.targetPath,
             format("Expected %s, got %s", coredumpDir.targetPath, coredumpDirParsed.targetPath));
@@ -411,7 +458,6 @@ unittest
     mkdir(corePath);
     scope (exit)
         rmdirRecurse(corePath);
-
     auto coredumpDir = new CoredumpDir(corePath, false);
     assert(buildPath(corePath, "coredumps.json").exists());
     assert(coredumpDir.targetPath == corePath);
@@ -420,21 +466,29 @@ unittest
 
 unittest
 {
-    // Setup stdin so this can we can read from it in addCoredump()
+
+    // Fix stdin again if things go south
+    auto savedStdin = new RestoreFd(stdin);
+    scope (exit)
+    {
+        savedStdin.restoreFd(stdin);
+    }
+
     auto dummyDumpPath = deleteme();
     scope (exit)
+    {
         remove(dummyDumpPath);
+    }
     immutable auto dummyCoredump = "coredump";
     auto coredumpFile = File(dummyDumpPath, "w");
     coredumpFile.write(dummyCoredump);
     coredumpFile.close();
+    // Setup stdin so this can we can read from it in addCoredump()
     stdin.reopen(dummyDumpPath, "r");
-
     auto corePath = deleteme() ~ "dir";
     mkdir(corePath);
     scope (exit)
         rmdirRecurse(corePath);
-
     auto coredump = new Coredump(1000, 1000, 1000, 6,
             SysTime.fromISOExtString("2018-01-01T10:30:00Z"), "testExe", "!usr!bin!testExe");
     coredump.generateCoredumpName();
@@ -444,7 +498,6 @@ unittest
     coredumpDir.writeConfig();
     assert(coreFullPath.exists());
     assert(readText(coreFullPath) == "coredump");
-
     immutable auto expectedVal = `{"coredumps":[{"exe":"testExe","exePath":"!usr!bin!testExe","filename":"testExe-6-1000-1000-1000-20180101T103000Z27c207f9-f0cc-5b99-b1cd-3e83d1626218","gid":1000,"pid":1000,"sig":6,"timestamp":"20180101T103000Z","uid":1000}],"dirSize":0}`;
     const auto configVal = readText(buildPath(corePath, "coredumps.json"));
     assert(expectedVal == configVal, format("Expected %s, got %s", expectedVal, configVal));
