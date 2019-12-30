@@ -37,6 +37,13 @@ import std.string;
 
 immutable humansCountFromOne = 1;
 
+class NoSuchCoredumpException : Exception
+{
+    this(string msg, string file = __FILE__, size_t line = __LINE__)
+    {
+        super(msg, file, line);
+    }
+}
 /// Class holding the logic of the `corectl` executable.
 class CoreCtl
 {
@@ -97,11 +104,9 @@ class CoreCtl
     /// Dump coredump `coreNum` to `targetPath`
     void dumpCore(in uint coreNum, in string targetPath) const
     {
-        if (!ensureCoredump(coreNum))
-        {
-            stderr.writefln("Coredump number %s doesn't exist!", coreNum + humansCountFromOne);
-            exit(1);
-        }
+
+        enforce!NoSuchCoredumpException(ensureCoredump(coreNum),
+                format("Coredump number %s doesn't exist!", coreNum + humansCountFromOne));
 
         File targetFile;
 
@@ -129,11 +134,9 @@ class CoreCtl
     /// Open coredump `coreNum` in debugger
     void debugCore(in uint coreNum) const
     {
-        if (!ensureCoredump(coreNum))
-        {
-            stderr.writefln("Coredump number %d doesn't exist!", coreNum + humansCountFromOne);
-            exit(1);
-        }
+        enforce!NoSuchCoredumpException(ensureCoredump(coreNum),
+                format("Coredump number %s doesn't exist!", coreNum + humansCountFromOne));
+
         auto corePath = getCorePath(coreNum);
         auto exePath = getExePath(coreNum);
         auto debuggerPid = spawnProcess(["gdb", exePath, corePath]);
@@ -144,11 +147,9 @@ class CoreCtl
     /// Print information about coredump `coreNum`
     void infoCore(in uint coreNum) const
     {
-        if (!ensureCoredump(coreNum))
-        {
-            stderr.writefln("Coredump number %d doesn't exist!", coreNum + humansCountFromOne);
-            exit(1);
-        }
+        enforce!NoSuchCoredumpException(ensureCoredump(coreNum),
+                format("Coredump number %s doesn't exist!", coreNum + humansCountFromOne));
+
         writefln("Info about coredump: %d\n" ~ "Coredump path:       %s",
                 coreNum + humansCountFromOne, getCorePath(coreNum));
     }
