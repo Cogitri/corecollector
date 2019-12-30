@@ -166,3 +166,65 @@ class Options
         }
     }
 }
+
+unittest
+{
+    import std.array : array;
+    import std.stdio;
+
+    auto args = array(["corectl", "-h"]);
+    assert(new Options(args).showHelp);
+    assert(args.length == 1);
+    args ~= "--version";
+    assert(new Options(args).showVersion);
+    assert(args.length == 1);
+
+    assertThrown!InsufficientArgLengthException(new Options(args));
+
+    args ~= "list";
+    assert(new Options(args).mode == "list");
+    args ~= "unexpectedarg";
+    assertThrown!UnexpectedArgumentException(new Options(args));
+
+    args = array(["corectl", "debug", "1"]);
+    auto optionsDebug = new Options(args);
+    assert(optionsDebug.id == 0);
+    assert(optionsDebug.mode == "debug");
+    args ~= "unexpectedarg";
+    assertThrown!UnexpectedArgumentException(new Options(args));
+    args = array(["corectl", "debug", "0"]);
+    assertThrown!BadIdException(new Options(args));
+    args = array(["corectl", "debug", "badid"]);
+    assertThrown!BadIdException(new Options(args));
+
+    args = array(["corectl", "info", "1"]);
+    auto optionsInfo = new Options(args);
+    assert(optionsInfo.id == 0);
+    assert(optionsInfo.mode == "info");
+    args ~= "unexpectedarg";
+    assertThrown!UnexpectedArgumentException(new Options(args));
+    args = array(["corectl", "info", "0"]);
+    assertThrown!BadIdException(new Options(args));
+    args = array(["corectl", "info", "badid"]);
+    assertThrown!BadIdException(new Options(args));
+
+    args = array(["corectl", "dump", "1"]);
+    auto optionsDump = new Options(args);
+    assert(optionsDump.id == 0);
+    assert(optionsDump.mode == "dump");
+    assert(optionsDump.file == "");
+    args = array(["corectl", "dump", "1", "stdout"]);
+    auto optionsDumpFile = new Options(args);
+    assert(optionsDumpFile.id == 0);
+    assert(optionsDumpFile.mode == "dump");
+    assert(optionsDumpFile.file == "stdout");
+    args = array(["corectl", "dump"]);
+    assertThrown!InsufficientArgLengthException(new Options(args));
+    args ~= "badid";
+    assertThrown!BadIdException(new Options(args));
+    args = array(["corectl", "dump", "1", "stdout", "unexpectedarg"]);
+    assertThrown!UnexpectedArgumentException(new Options(args));
+
+    args = array(["corectl", "unknownarg"]);
+    assertThrown!UnknownArgumentException(new Options(args));
+}
