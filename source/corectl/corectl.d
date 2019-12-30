@@ -217,7 +217,72 @@ unittest
 unittest
 {
     const auto corePath = deleteme() ~ "dir";
+    scope (exit)
+        rmdirRecurse(corePath);
     auto coreCtl = setupCoreCtl(corePath);
     assert(coreCtl.ensureCoredump(0));
     assert(!coreCtl.ensureCoredump(1));
+}
+
+unittest
+{
+    const auto corePath = deleteme() ~ "dir";
+    const auto coreCtl = setupCoreCtl(corePath);
+    scope (exit)
+        rmdirRecurse(corePath);
+
+    auto dumpPath = deleteme() ~ "dump";
+    scope (exit)
+        remove(dumpPath);
+
+    coreCtl.dumpCore(0, dumpPath);
+    immutable auto expectedVal = "coredump";
+    const auto actualVal = readText(dumpPath);
+    assert(expectedVal == actualVal, format("Expected %s, got %s", expectedVal, actualVal));
+
+    auto savedStdout = new RestoreFd(stdout);
+    scope (exit)
+        savedStdout.restoreFd(stdout);
+
+    // Setup stdout so we can verify the output.
+    auto dummyStdoutPath = deleteme() ~ "stdout";
+    stdout.reopen(dummyStdoutPath, "w");
+
+    coreCtl.dumpCore(0, "stdout");
+
+    savedStdout.restoreFd(stdout);
+
+    const auto actualValStdout = readText(dummyStdoutPath);
+    assert(expectedVal == actualValStdout, format("Expected %s, got %s",
+            expectedVal, actualValStdout));
+
+    assertThrown!NoSuchCoredumpException(coreCtl.dumpCore(1, "stdout"));
+}
+
+unittest
+{
+    auto savedStdout = new RestoreFd(stdout);
+    scope (exit)
+        savedStdout.restoreFd(stdout);
+
+    const auto corePath = deleteme() ~ "dir";
+    const auto coreCtl = setupCoreCtl(corePath);
+    scope (exit)
+        rmdirRecurse(corePath);
+
+    // Setup stdout so we can verify the output.
+    auto dummyStdoutPath = deleteme() ~ "2";
+    stdout.reopen(dummyStdoutPath, "w");
+
+    coreCtl.infoCore(0);
+
+    savedStdout.restoreFd(stdout);
+
+    immutable auto expectedVal = format("Info about coredump: 1\nCoredump path:       %s\n",
+            buildPath(corePath, coreCtl.coredumpDir.coredumps[0].generateCoredumpName()));
+
+    const auto actualVal = readText(dummyStdoutPath);
+    assert(expectedVal == actualVal, format("Expected %s, got %s", expectedVal, actualVal));
+
+    assertThrown!NoSuchCoredumpException(coreCtl.infoCore(1));
 }
