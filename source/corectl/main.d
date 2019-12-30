@@ -100,16 +100,40 @@ int main(string[] args)
         coreCtl.listCoredumps();
         break;
     case "debug":
-        coreCtl.debugCore(options.id);
+        try
+        {
+            coreCtl.debugCore(options.id);
+        }
+        catch (NoSuchCoredumpException e)
+        {
+            stderr.writeln(e.msg);
+            return 1;
+        }
         break;
     case "info":
-        coreCtl.infoCore(options.id);
+        try
+        {
+            coreCtl.infoCore(options.id);
+        }
+        catch (NoSuchCoredumpException e)
+        {
+            stderr.writeln(e.msg);
+            return 1;
+        }
         break;
     case "dump":
-        coreCtl.dumpCore(options.id, options.file);
+        try
+        {
+            coreCtl.dumpCore(options.id, options.file);
+        }
+        catch (NoSuchCoredumpException e)
+        {
+            stderr.writeln(e.msg);
+            return 1;
+        }
         break;
     default:
-        criticalf("Unknown operation %s\n", options.mode);
+        stderr.writefln("Unknown operation %s\n", options.mode);
         return 1;
     }
 
