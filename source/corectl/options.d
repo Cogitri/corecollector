@@ -19,11 +19,14 @@
 
 module corectl.options;
 
+import std.algorithm.mutation : remove;
+
 import std.conv;
 import std.exception;
 import std.format;
 import std.getopt;
 import std.stdio;
+import std.typecons : tuple;
 
 immutable helpText = "
 Usage:
@@ -45,6 +48,38 @@ Application Options:
   -v, --version      - Print program version.
   -d, --debug [0-3]  - Specify the debug level.";
 
+class InsufficientArgLengthException : Exception
+{
+    this(string msg, string file = __FILE__, size_t line = __LINE__) @safe
+    {
+        super(msg, file, line);
+    }
+}
+
+class UnexpectedArgumentException : Exception
+{
+    this(string msg, string file = __FILE__, size_t line = __LINE__) @safe
+    {
+        super(msg, file, line);
+    }
+}
+
+class UnknownArgumentException : Exception
+{
+    this(string msg, string file = __FILE__, size_t line = __LINE__) @safe
+    {
+        super(msg, file, line);
+    }
+}
+
+class BadIdException : Exception
+{
+    this(string msg, string file = __FILE__, size_t line = __LINE__) @safe
+    {
+        super(msg, file, line);
+    }
+}
+
 /// CLI `Options` of `corectl`
 class Options
 {
@@ -55,62 +90,79 @@ class Options
     string mode;
     string file;
 
-    this(string[] args) @safe
+    this(ref string[] args) @safe
     {
-        getopt(args, "help|h", &showHelp, "version|v", &showVersion, "debug|d", &debugLevel);
+        getopt(args, "help|h", &this.showHelp, "version|v",
+                &this.showVersion, "debug|d", &this.debugLevel);
 
         if (showHelp || showVersion)
         {
             return;
         }
 
-        enforce(args.length >= 2, "Please specify a subcommand.");
+        enforce!InsufficientArgLengthException(args.length >= 2, "Please specify a subcommand.");
 
         this.mode = args[1];
         switch (this.mode)
         {
         case "list":
-            enforce(args.length == 2, "Didn't expect additional arguments to 'list'");
+            enforce!UnexpectedArgumentException(args.length == 2,
+                    format("Didn't expect the additional arguments %s to subcommand 'list'",
+                        args.remove(tuple(0, 2))));
             break;
         case "debug":
         case "info":
-            enforce(args.length == 3, "Only expected two arguments (subcommand and ID)");
-            this.id = args[2].to!uint - 1;
+            enforce!InsufficientArgLengthException(args.length >= 3,
+                    format("Expected an ID after the subcommand %s", this.mode));
+            enforce!UnexpectedArgumentException(args.length == 3,
+                    format("Didn't expect the additional arguments %s to subcommand '%s'",
+                        args.remove(tuple(0, 3)), this.mode));
+            try
+            {
+                this.id = args[2].to!int - 1;
+            }
+            catch (ConvException e)
+            {
+                throw new BadIdException(format("Can't decode bad ID %s due to error %s",
+                        args[2], e.msg));
+            }
+
+            enforce!BadIdException(this.id > -1,
+                    format("Bad ID %d, IDs start from 1 (see 'corectl list' to find out the ID of a coredump",
+                        this.id + 1));
             break;
         case "dump":
-            if (args.length == 3)
+            enforce!InsufficientArgLengthException(args.length >= 3,
+                    "Expected an ID and optionally a path (or stdout) to dump the coredumd to after the subcommand 'dump'");
+
+            try
             {
-                this.id = args[2].to!uint;
-                if (this.id == 0)
-                {
-                    writeln("IDs start from 0!");
-                }
-                else
-                {
-                    this.id -= 1;
-                }
+                this.id = args[2].to!int - 1;
             }
-            else if (args.length == 4)
+            catch (ConvException e)
             {
-                this.id = args[2].to!uint;
-                if (this.id == 0)
-                {
-                    writeln("IDs start from 0!");
-                }
-                else
-                {
-                    this.id -= 1;
-                }
+                throw new BadIdException(format("Can't decode bad ID %s due to error %s",
+                        args[2], e.msg));
+            }
+
+            enforce!BadIdException(this.id > -1,
+                    format("Bad ID %d, IDs start from 1 (see 'corectl list' to find out the ID of a coredump",
+                        this.id + 1));
+
+            if (args.length == 4)
+            {
                 this.file = args[3];
             }
-            else
+            else if (args.length != 3)
             {
-                enforce(0, "Expected either ID or ID and file to dump to for subcommand");
+                throw new UnexpectedArgumentException(format(
+                        "Didn't expect the additional arguments %s to the subcommand 'dump'",
+                        args.remove(tuple(0, 4))));
             }
 
             break;
         default:
-            enforce(0, format("Unknown subcommand %s", this.mode));
+            throw new UnknownArgumentException(format("Unknown subcommand %s", this.mode));
         }
     }
 }
