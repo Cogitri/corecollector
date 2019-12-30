@@ -40,8 +40,14 @@ import std.stdio;
 
 int main(string[] args)
 {
+    Options options;
+    auto exMsg = collectExceptionMsg(options = new Options(args));
+    if (exMsg)
+    {
+        stderr.writeln(exMsg);
+        return 1;
+    }
 
-    auto options = new Options(args);
     if (options.showHelp)
     {
         writeln(helpText);
