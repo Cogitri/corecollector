@@ -14,9 +14,3 @@ subdir('corecollector')
 subdir('corectl')
 
 subdir('corehelper')
-
-install_subdir(
-    'corecollector',
-    install_dir: include_dir,
-    exclude_files: 'meson.build',
-)

@@ -7,14 +7,13 @@ globals_d = configure_file(
 lib_src = [
     'configuration.d',
     'coredump.d',
-    'muslsyslog.d',
     'logging.d',
     globals_d,
 ]
 
 core_lib = library(
     'corecollector',
-    lib_src,
+    ['muslsyslog.d', lib_src],
     install: true,
     version: meson.project_version(),
     soversion: project_soversion,
@@ -49,4 +48,9 @@ core_lib_test_exe = executable(
 test(
     'corelib-test',
      core_lib_test_exe,
+)
+
+install_headers(
+    lib_src,
+    subdir: 'd/corecollector/corecollector',
 )
