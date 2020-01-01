@@ -162,6 +162,8 @@ class CoredumpDir
     ulong dirSize;
     /// The maximum size of the CoredumpDir. Measued in KByte.
     ulong maxDirSize;
+    /// Maximum size of a single coredump. Measured in KByte.
+    ulong maxCoredumpSize;
 
     private this() @safe
     {
@@ -204,9 +206,10 @@ class CoredumpDir
 
     /// ctor to construct a `CoredumpDir` from a `targetPath` in which a `coredumps.json` is contained.
     /// Also specify how big the `CoredumpDir` may get, 0 meaning no limit.
-    this(in string targetPath, in bool readOnly, in ulong maxDirSize)
+    this(in string targetPath, in bool readOnly, in ulong maxDirSize, in ulong maxCoredumpSize)
     {
         this.maxDirSize = maxDirSize;
+        this.maxCoredumpSize = maxCoredumpSize;
         this(targetPath, readOnly);
     }
 
@@ -224,15 +227,26 @@ class CoredumpDir
     void addCoredump(Coredump coredump)
     {
         tracef("Adding coredump '%s'", coredump);
-        this.coredumps ~= coredump;
         auto coredumpPath = buildPath(this.targetPath, coredump.generateCoredumpName());
         auto target = File(coredumpPath, "w");
         scope (exit)
         {
             target.close();
-            errnoEnforce(chmod(coredumpPath.toStringz, octal!(640)) == 0,
-                    format("Failed to change permissions on file %s due to error %s",
-                        coredumpPath, errno));
+            const auto coredumpSize = getSize(coredumpPath) / 1000;
+            if (this.maxCoredumpSize != 0 && coredumpSize > this.maxCoredumpSize)
+            {
+                infof("Coredump '%s' os too big, removing...", coredump);
+                remove(coredumpPath);
+            }
+            else
+            {
+                infof("Not deleting coredump '%s', size is: %d", coredump, coredumpSize);
+                this.coredumps ~= coredump;
+                errnoEnforce(chmod(coredumpPath.toStringz, octal!(640)) == 0,
+                        format("Failed to change permissions on file %s due to error %s",
+                            coredumpPath, errno));
+                this.dirSize += coredumpSize;
+            }
         }
 
         tracef("Writing coredump to path '%s'", coredumpPath);
@@ -240,8 +254,6 @@ class CoredumpDir
         {
             target.rawWrite(buffer);
         }
-
-        this.dirSize += getSize(coredumpPath) / 1000;
     }
 
     /// Check if the dir is bigger than the maxDirSize specified by the user and if so, delete old
@@ -509,5 +521,79 @@ unittest
     mkdir(corePath);
     scope (exit)
         rmdirRecurse(corePath);
-    auto coredumpDir = new CoredumpDir(corePath, false, 1);
+    auto coredumpDir = new CoredumpDir(corePath, false, 1, 0);
+}
+
+unittest
+{
+
+    // Fix stdin again if things go south
+    auto savedStdin = new RestoreFd(stdin);
+    scope (exit)
+    {
+        savedStdin.restoreFd(stdin);
+    }
+
+    auto dummyDumpPath = deleteme();
+    scope (exit)
+    {
+        remove(dummyDumpPath);
+    }
+    uint[] randomData;
+    while (randomData.length * uint.sizeof < 10_000)
+    {
+        randomData ~= 0;
+    }
+    auto coredumpFileDet = File(dummyDumpPath, "w");
+    coredumpFileDet.write(randomData);
+    coredumpFileDet.close();
+    // Setup stdin so this can we can read from it in addCoredump()
+    stdin.reopen(dummyDumpPath, "r");
+    auto corePath = deleteme() ~ "dir";
+    mkdir(corePath);
+    scope (exit)
+        rmdirRecurse(corePath);
+    auto coredump = new Coredump(1000, 1000, 1000, 6,
+            SysTime.fromISOExtString("2018-01-01T10:30:00Z"), "testExe", "!usr!bin!testExe");
+    auto coreFullPath = buildPath(corePath, coredump.generateCoredumpName());
+    auto coredumpDir = new CoredumpDir(corePath, false, 0, 1);
+    coredumpDir.addCoredump(coredump);
+    assert(!coreFullPath.exists());
+}
+
+unittest
+{
+
+    // Fix stdin again if things go south
+    auto savedStdin = new RestoreFd(stdin);
+    scope (exit)
+    {
+        savedStdin.restoreFd(stdin);
+    }
+
+    auto dummyDumpPath = deleteme();
+    scope (exit)
+    {
+        remove(dummyDumpPath);
+    }
+    uint[] randomData;
+    while (randomData.length * uint.sizeof < 10_000)
+    {
+        randomData ~= 0;
+    }
+    auto coredumpFileDet = File(dummyDumpPath, "w");
+    coredumpFileDet.write(randomData);
+    coredumpFileDet.close();
+    // Setup stdin so this can we can read from it in addCoredump()
+    stdin.reopen(dummyDumpPath, "r");
+    auto corePath = deleteme() ~ "dir";
+    mkdir(corePath);
+    scope (exit)
+        rmdirRecurse(corePath);
+    auto coredump = new Coredump(1000, 1000, 1000, 6,
+            SysTime.fromISOExtString("2018-01-01T10:30:00Z"), "testExe", "!usr!bin!testExe");
+    auto coreFullPath = buildPath(corePath, coredump.generateCoredumpName());
+    auto coredumpDir = new CoredumpDir(corePath, false, 0, 10);
+    coredumpDir.addCoredump(coredump);
+    assert(coreFullPath.exists());
 }

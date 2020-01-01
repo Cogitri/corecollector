@@ -3,6 +3,7 @@
 compression = none
 # The maximum size of coredumps.
 # Unset or set to 0 to set no size limit.
+# Measured in KByte, must be whole numbers.
 maxSize = 0
 # The path to save coredumps to.
 targetPath = @COREDUMP_PATH@
