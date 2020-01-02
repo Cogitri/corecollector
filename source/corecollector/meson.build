@@ -38,7 +38,6 @@ pkgc.generate(
 core_lib_test_lib = library(
     'core-lib-test-lib',
     lib_src,
-    d_unittest: true,
     include_directories: src_inc,
     d_args: '-J' + join_paths(meson.current_source_dir(), 'views'),
     d_module_versions: ['unittest_manual'],
