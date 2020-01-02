@@ -442,7 +442,7 @@ unittest
     auto validString = `{"coredumps": [{"exe":"test","exePath":"\/usr\/bin\/","filename":"test-1-1-1-1-20180101T113000Z210e5658-e54b-5bcb-ae8e-3fd0af836af6","gid":1,"pid":1,"sig":1, "timestamp":"20180101T113000Z","uid":1}, {"exe":"test","exePath":"\/usr\/bin\/","filename":"test-1-1-1-1-20180101T103000Z707194c0-a989-5a62-a7fa-6eb30f52647a","gid":1,"pid":1,"sig":1,"timestamp": "20180101T103000Z","uid":1}], "dirSize": 0}`;
     auto validJSON = parseJSON(validString);
     auto generatedJSON = coredumpDir.toJson();
-    assert(generatedJSON == validJSON, format("Expected %s, got %s", validJSON, generatedJSON));
+    assert(generatedJSON.toString() == validJSON.toString(), format("Expected %s, got %s", validJSON, generatedJSON));
     auto coredumpDirParsed = new CoredumpDir(generatedJSON);
     assert(coredumpDirParsed.targetPath == coredumpDir.targetPath,
             format("Expected %s, got %s", coredumpDir.targetPath, coredumpDirParsed.targetPath));
