@@ -5,7 +5,6 @@ globals_d = configure_file(
 )
 
 lib_src = [
-    'lib.d',
     'configuration.d',
     'coredump.d',
     'logging.d',
@@ -36,14 +35,32 @@ pkgc.generate(
     version: meson.project_version(),
 )
 
-core_lib_test_exe = executable(
-    'core-lib-text-exe',
+core_lib_test_lib = library(
+    'core-lib-test-lib',
     lib_src,
     d_unittest: true,
     include_directories: src_inc,
     d_args: '-J' + join_paths(meson.current_source_dir(), 'views'),
     d_module_versions: ['unittest_manual'],
     link_args: [link_runtime_shared_arg],
+)
+
+core_lib_test_lib_dep = declare_dependency(
+    link_with: core_lib_test_lib,
+    include_directories: src_inc,
+    link_args: link_runtime_shared_arg,
+)
+
+# TODO: instead of compiling the source twice here it'd be nice if we could
+# link a dummy main() against core_lib_test_lib_dep
+core_lib_test_exe = executable(
+    'core-lib-test-exe',
+    [lib_src, 'lib.d'],
+    d_unittest: true,
+    link_args: [link_runtime_shared_arg],
+    include_directories: src_inc,
+    d_module_versions: ['unittest_manual'],
+    d_args: '-J' + join_paths(meson.current_source_dir(), 'views'),
 )
 
 test(
