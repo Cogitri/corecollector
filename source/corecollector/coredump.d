@@ -294,7 +294,7 @@ class CoredumpDir
                 {
                     throw new NoCoredumpDir("Can't create new directory in read-only mode!");
                 }
-                this.targetPath.mkdir;
+                mkdirRecurse(this.targetPath);
             }
             try
             {
@@ -385,25 +385,31 @@ version (unittest_manual)
             dup2(this.filenum, fileno(fp));
         }
     }
+
+    string tempFile(in int line, in string file)
+    {
+        string UUID = sha1UUID(line.to!string ~ file ~ Clock.currTime().toString()).toString();
+        auto testDir = buildPath(tempDir(), "corecollectorTests");
+        if (!testDir.exists())
+        {
+            mkdirRecurse(testDir);
+        }
+        return buildPath(testDir, UUID);
+    }
 }
 
 ///
 unittest
 {
-    auto dummyStdoutPath = deleteme();
+    auto dummyStdoutPath = tempFile(__LINE__, __FILE_FULL_PATH__);
     scope (exit)
         remove(dummyStdoutPath);
-
     auto savedStdout = new RestoreFd(stdout);
-
     stdout.reopen(dummyStdoutPath, "w");
-
     immutable auto expectedVal = "Writing this to a dummy file instead of stdout";
     stdout.write(expectedVal);
-
     savedStdout.restoreFd(stdout);
     assert(readText(dummyStdoutPath) == expectedVal);
-
     stdout.writeln("This isn't going to end up in the file");
     assert(readText(dummyStdoutPath) == expectedVal);
 }
@@ -442,7 +448,8 @@ unittest
     auto validString = `{"coredumps": [{"exe":"test","exePath":"\/usr\/bin\/","filename":"test-1-1-1-1-20180101T113000Z210e5658-e54b-5bcb-ae8e-3fd0af836af6","gid":1,"pid":1,"sig":1, "timestamp":"20180101T113000Z","uid":1}, {"exe":"test","exePath":"\/usr\/bin\/","filename":"test-1-1-1-1-20180101T103000Z707194c0-a989-5a62-a7fa-6eb30f52647a","gid":1,"pid":1,"sig":1,"timestamp": "20180101T103000Z","uid":1}], "dirSize": 0}`;
     auto validJSON = parseJSON(validString);
     auto generatedJSON = coredumpDir.toJson();
-    assert(generatedJSON.toString() == validJSON.toString(), format("Expected %s, got %s", validJSON, generatedJSON));
+    assert(generatedJSON.toString() == validJSON.toString(),
+            format("Expected %s, got %s", validJSON, generatedJSON));
     auto coredumpDirParsed = new CoredumpDir(generatedJSON);
     assert(coredumpDirParsed.targetPath == coredumpDir.targetPath,
             format("Expected %s, got %s", coredumpDir.targetPath, coredumpDirParsed.targetPath));
@@ -466,8 +473,8 @@ unittest
 
 unittest
 {
-    auto corePath = deleteme();
-    mkdir(corePath);
+    auto corePath = tempFile(__LINE__, __FILE_FULL_PATH__);
+
     scope (exit)
         rmdirRecurse(corePath);
     auto coredumpDir = new CoredumpDir(corePath, false);
@@ -486,7 +493,7 @@ unittest
         savedStdin.restoreFd(stdin);
     }
 
-    auto dummyDumpPath = deleteme();
+    auto dummyDumpPath = tempFile(__LINE__, __FILE_FULL_PATH__);
     scope (exit)
     {
         remove(dummyDumpPath);
@@ -494,11 +501,10 @@ unittest
     immutable auto dummyCoredump = "coredump";
     auto coredumpFile = File(dummyDumpPath, "w");
     coredumpFile.write(dummyCoredump);
-    coredumpFile.close();
-    // Setup stdin so this can we can read from it in addCoredump()
+    coredumpFile.close(); // Setup stdin so this can we can read from it in addCoredump()
     stdin.reopen(dummyDumpPath, "r");
-    auto corePath = deleteme() ~ "dir";
-    mkdir(corePath);
+    auto corePath = tempFile(__LINE__, __FILE_FULL_PATH__);
+
     scope (exit)
         rmdirRecurse(corePath);
     auto coredump = new Coredump(1000, 1000, 1000, 6,
@@ -517,8 +523,8 @@ unittest
 
 unittest
 {
-    auto corePath = deleteme();
-    mkdir(corePath);
+    auto corePath = tempFile(__LINE__, __FILE_FULL_PATH__);
+
     scope (exit)
         rmdirRecurse(corePath);
     auto coredumpDir = new CoredumpDir(corePath, false, 1, 0);
@@ -534,7 +540,7 @@ unittest
         savedStdin.restoreFd(stdin);
     }
 
-    auto dummyDumpPath = deleteme();
+    auto dummyDumpPath = tempFile(__LINE__, __FILE_FULL_PATH__);
     scope (exit)
     {
         remove(dummyDumpPath);
@@ -549,8 +555,8 @@ unittest
     coredumpFileDet.close();
     // Setup stdin so this can we can read from it in addCoredump()
     stdin.reopen(dummyDumpPath, "r");
-    auto corePath = deleteme() ~ "dir";
-    mkdir(corePath);
+    auto corePath = tempFile(__LINE__, __FILE_FULL_PATH__);
+
     scope (exit)
         rmdirRecurse(corePath);
     auto coredump = new Coredump(1000, 1000, 1000, 6,
@@ -571,7 +577,7 @@ unittest
         savedStdin.restoreFd(stdin);
     }
 
-    auto dummyDumpPath = deleteme();
+    auto dummyDumpPath = tempFile(__LINE__, __FILE_FULL_PATH__);
     scope (exit)
     {
         remove(dummyDumpPath);
@@ -586,8 +592,8 @@ unittest
     coredumpFileDet.close();
     // Setup stdin so this can we can read from it in addCoredump()
     stdin.reopen(dummyDumpPath, "r");
-    auto corePath = deleteme() ~ "dir";
-    mkdir(corePath);
+    auto corePath = tempFile(__LINE__, __FILE_FULL_PATH__);
+
     scope (exit)
         rmdirRecurse(corePath);
     auto coredump = new Coredump(1000, 1000, 1000, 6,
