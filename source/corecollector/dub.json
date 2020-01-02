@@ -13,6 +13,9 @@
             "versions": ["unittest_manual"]
         }
     ],
+    "excludedSourceFiles": [
+        "lib.d"
+    ],
     "sourcePaths": [
         "."
     ],

@@ -1,0 +1,3 @@
+version(unittest) {
+    void main() {}
+}
