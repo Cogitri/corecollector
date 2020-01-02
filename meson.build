@@ -3,7 +3,7 @@ project(
     'd',
     license: 'GPL-3.0-or-later',
     meson_version: '>=0.50',
-    version: '0.0.1',
+    version: '0.1.0',
 )
 
 project_soversion = 0
