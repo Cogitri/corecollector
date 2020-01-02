@@ -1,13 +1,22 @@
 helper_src = [
-    'main.d',
     'options.d',
     'corehelper.d',
 ]
 
 executable(
     'corehelper',
-    helper_src,
+    ['main.d', helper_src],
     install: true,
     dependencies: core_lib_dep,
     install_dir: libexec_dir,
 )
+
+corehelper_test_exe = executable(
+    'corehelper-test-exe',
+    ['../corecollector/lib.d', helper_src],
+    dependencies: core_lib_test_lib_dep,
+    d_unittest: true,
+    d_module_versions: ['unittest_manual'],
+)
+
+test('corehelper-test', corehelper_test_exe)
