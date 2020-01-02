@@ -5,6 +5,7 @@ globals_d = configure_file(
 )
 
 lib_src = [
+    'lib.d',
     'configuration.d',
     'coredump.d',
     'logging.d',
@@ -42,7 +43,7 @@ core_lib_test_exe = executable(
     include_directories: src_inc,
     d_args: '-J' + join_paths(meson.current_source_dir(), 'views'),
     d_module_versions: ['unittest_manual'],
-    link_args: [link_runtime_shared_arg, '-main'],
+    link_args: [link_runtime_shared_arg],
 )
 
 test(
