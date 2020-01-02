@@ -54,7 +54,14 @@ int main(string[] args)
         fatalf("Couldn't read configuration at path '%s' due to error: %s", configPath, e);
     }
 
-    setupLogging(LogLevel.warning, File(conf.logPath, "w"));
+    if (conf.debugEnabled)
+    {
+        setupLogging(LogLevel.warning, File(conf.logPath, "w"));
+    }
+    else
+    {
+        setupLogging(LogLevel.trace, File(conf.logPath, "w"));
+    }
 
     const auto options = new Options(args);
 

@@ -63,6 +63,8 @@ class Configuration
     string logPath = "/var/log/corecollector.log";
     /// The maximum size of the corecollector dir
     ulong maxDirSize = 0;
+    /// Whether to print debugging messages or not
+    bool debugEnabled;
 
     /// Construct a `Configuration` with the default `configPath`
     this()
@@ -109,6 +111,9 @@ class Configuration
             case "maxdirsize":
                 this.maxDirSize = val.to!ulong;
                 break;
+            case "enabledebug":
+                this.debugEnabled = val.to!bool;
+                break;
             default:
                 enforce!UnknownKeyConfigurationException(0, "Unknown configuration key '%s'!", val);
             }
@@ -134,6 +139,7 @@ unittest
     assert(configTest.logPath == "/var/log/corecollector.log",
             format("Expected %s, got %s", "/var/log/corecollector.log", configTest.logPath));
     assert(configTest.maxDirSize == 0, format("Expected %d, got %d", 0, configTest.maxDirSize));
+    assert(configTest.debugEnabled);
 }
 
 unittest
@@ -154,6 +160,7 @@ unittest
     assert(configTest.logPath == "/var/log/corecollector.log",
             format("Expected %s, got %s", "/var/log/corecollector.log", configTest.logPath));
     assert(configTest.maxDirSize == 0, format("Expected %d, got %d", 0, configTest.maxDirSize));
+    assert(!configTest.debugEnabled);
 }
 
 unittest
