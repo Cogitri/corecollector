@@ -123,8 +123,10 @@ class Configuration
 
 unittest
 {
+    import corecollector.coredump : tempFile;
+
     immutable auto testConfig = import("configTest01.conf");
-    auto testConfigPath = deleteme();
+    auto testConfigPath = tempFile(__LINE__, __FILE_FULL_PATH__);
     auto configFile = File(testConfigPath, "w");
     scope (exit)
         remove(testConfigPath);
@@ -144,8 +146,10 @@ unittest
 
 unittest
 {
+    import corecollector.coredump : tempFile;
+
     immutable auto testConfig = import("configTest02.conf");
-    auto testConfigPath = deleteme();
+    auto testConfigPath = tempFile(__LINE__, __FILE_FULL_PATH__);
     auto configFile = File(testConfigPath, "w");
     scope (exit)
         remove(testConfigPath);
@@ -165,14 +169,18 @@ unittest
 
 unittest
 {
-    auto testConfigPath = deleteme();
+    import corecollector.coredump : tempFile;
+
+    auto testConfigPath = tempFile(__LINE__, __FILE_FULL_PATH__);
     assertThrown!MissingFileConfigurationException(new Configuration(testConfigPath));
 }
 
 unittest
 {
+    import corecollector.coredump : tempFile;
+
     immutable auto testConfig = "unknownKey = unknownValue";
-    auto testConfigPath = deleteme();
+    auto testConfigPath = tempFile(__LINE__, __FILE_FULL_PATH__);
     auto configFile = File(testConfigPath, "w");
     scope (exit)
         remove(testConfigPath);

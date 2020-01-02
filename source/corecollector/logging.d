@@ -97,10 +97,11 @@ unittest
 
 unittest
 {
+    import corecollector.coredump : tempFile;
     import std.algorithm : count;
-    import std.file : deleteme, readText, remove;
+    import std.file : readText, remove;
 
-    const auto testLogPath = deleteme();
+    const auto testLogPath = tempFile(__LINE__, __FILE_FULL_PATH__);
     scope (exit)
         remove(testLogPath);
 

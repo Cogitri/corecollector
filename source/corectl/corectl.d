@@ -168,7 +168,7 @@ version (unittest)
         }
 
         // Setup stdin so we can read from it in addCoredump()
-        auto dummyDumpPath = deleteme() ~ "1";
+        auto dummyDumpPath = tempFile(__LINE__, __FILE_FULL_PATH__);
         scope (exit)
             remove(dummyDumpPath);
         immutable auto dummyCoredump = "coredump";
@@ -194,13 +194,15 @@ unittest
     scope (exit)
         savedStdout.restoreFd(stdout);
 
-    const auto corePath = deleteme() ~ "dir";
+    const auto corePath = tempFile(__LINE__, __FILE_FULL_PATH__);
     auto coreCtl = setupCoreCtl(corePath);
     scope (exit)
         rmdirRecurse(corePath);
 
     // Setup stdout so we can verify the output.
-    auto dummyStdoutPath = deleteme() ~ "2";
+    auto dummyStdoutPath = tempFile(__LINE__, __FILE_FULL_PATH__);
+    scope (exit)
+        remove(dummyStdoutPath);
     stdout.reopen(dummyStdoutPath, "w");
 
     coreCtl.listCoredumps();
@@ -216,7 +218,7 @@ unittest
 
 unittest
 {
-    const auto corePath = deleteme() ~ "dir";
+    const auto corePath = tempFile(__LINE__, __FILE_FULL_PATH__);
     scope (exit)
         rmdirRecurse(corePath);
     auto coreCtl = setupCoreCtl(corePath);
@@ -226,12 +228,12 @@ unittest
 
 unittest
 {
-    const auto corePath = deleteme() ~ "dir";
+    const auto corePath = tempFile(__LINE__, __FILE_FULL_PATH__);
     const auto coreCtl = setupCoreCtl(corePath);
     scope (exit)
         rmdirRecurse(corePath);
 
-    auto dumpPath = deleteme() ~ "dump";
+    auto dumpPath = tempFile(__LINE__, __FILE_FULL_PATH__);
     scope (exit)
         remove(dumpPath);
 
@@ -245,7 +247,9 @@ unittest
         savedStdout.restoreFd(stdout);
 
     // Setup stdout so we can verify the output.
-    auto dummyStdoutPath = deleteme() ~ "stdout";
+    auto dummyStdoutPath = tempFile(__LINE__, __FILE_FULL_PATH__);
+    scope (exit)
+        remove(dummyStdoutPath);
     stdout.reopen(dummyStdoutPath, "w");
 
     coreCtl.dumpCore(0, "stdout");
@@ -265,13 +269,15 @@ unittest
     scope (exit)
         savedStdout.restoreFd(stdout);
 
-    const auto corePath = deleteme() ~ "dir";
+    const auto corePath = tempFile(__LINE__, __FILE_FULL_PATH__);
     const auto coreCtl = setupCoreCtl(corePath);
     scope (exit)
         rmdirRecurse(corePath);
 
     // Setup stdout so we can verify the output.
-    auto dummyStdoutPath = deleteme() ~ "2";
+    auto dummyStdoutPath = tempFile(__LINE__, __FILE_FULL_PATH__);
+    scope (exit)
+        remove(dummyStdoutPath);
     stdout.reopen(dummyStdoutPath, "w");
 
     coreCtl.infoCore(0);
