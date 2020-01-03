@@ -40,6 +40,7 @@ import std.path;
 import std.stdio;
 import std.string;
 import std.uuid;
+import std.process : executeShell;
 
 /// A class describing a single coredump
 class Coredump
@@ -476,7 +477,7 @@ unittest
     auto corePath = tempFile(__LINE__, __FILE_FULL_PATH__);
 
     scope (exit)
-        rmdirRecurse(corePath);
+        executeShell(format("rm -rf %s", corePath));
     auto coredumpDir = new CoredumpDir(corePath, false);
     assert(buildPath(corePath, "coredumps.json").exists());
     assert(coredumpDir.targetPath == corePath);
@@ -506,7 +507,7 @@ unittest
     auto corePath = tempFile(__LINE__, __FILE_FULL_PATH__);
 
     scope (exit)
-        rmdirRecurse(corePath);
+        executeShell(format("rm -rf %s", corePath));
     auto coredump = new Coredump(1000, 1000, 1000, 6,
             SysTime.fromISOExtString("2018-01-01T10:30:00Z"), "testExe", "!usr!bin!testExe");
     coredump.generateCoredumpName();
@@ -526,7 +527,7 @@ unittest
     auto corePath = tempFile(__LINE__, __FILE_FULL_PATH__);
 
     scope (exit)
-        rmdirRecurse(corePath);
+        executeShell(format("rm -rf %s", corePath));
     auto coredumpDir = new CoredumpDir(corePath, false, 1, 0);
 }
 
@@ -558,7 +559,7 @@ unittest
     auto corePath = tempFile(__LINE__, __FILE_FULL_PATH__);
 
     scope (exit)
-        rmdirRecurse(corePath);
+        executeShell(format("rm -rf %s", corePath));
     auto coredump = new Coredump(1000, 1000, 1000, 6,
             SysTime.fromISOExtString("2018-01-01T10:30:00Z"), "testExe", "!usr!bin!testExe");
     auto coreFullPath = buildPath(corePath, coredump.generateCoredumpName());
@@ -595,7 +596,7 @@ unittest
     auto corePath = tempFile(__LINE__, __FILE_FULL_PATH__);
 
     scope (exit)
-        rmdirRecurse(corePath);
+        executeShell(format("rm -rf %s", corePath));
     auto coredump = new Coredump(1000, 1000, 1000, 6,
             SysTime.fromISOExtString("2018-01-01T10:30:00Z"), "testExe", "!usr!bin!testExe");
     auto coreFullPath = buildPath(corePath, coredump.generateCoredumpName());
