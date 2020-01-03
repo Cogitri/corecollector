@@ -168,7 +168,7 @@ version (unittest)
         }
 
         // Setup stdin so we can read from it in addCoredump()
-        auto dummyDumpPath = tempFile(__LINE__, __FILE_FULL_PATH__);
+        auto dummyDumpPath = tempFile();
         scope (exit)
             remove(dummyDumpPath);
         immutable auto dummyCoredump = "coredump";
@@ -194,13 +194,13 @@ unittest
     scope (exit)
         savedStdout.restoreFd(stdout);
 
-    const auto corePath = tempFile(__LINE__, __FILE_FULL_PATH__);
+    const auto corePath = tempFile();
     auto coreCtl = setupCoreCtl(corePath);
     scope (exit)
         executeShell(format("rm -rf %s", corePath));
 
     // Setup stdout so we can verify the output.
-    auto dummyStdoutPath = tempFile(__LINE__, __FILE_FULL_PATH__);
+    auto dummyStdoutPath = tempFile();
     scope (exit)
         remove(dummyStdoutPath);
     stdout.reopen(dummyStdoutPath, "w");
@@ -218,7 +218,7 @@ unittest
 
 unittest
 {
-    const auto corePath = tempFile(__LINE__, __FILE_FULL_PATH__);
+    const auto corePath = tempFile();
     scope (exit)
         executeShell(format("rm -rf %s", corePath));
     auto coreCtl = setupCoreCtl(corePath);
@@ -228,12 +228,12 @@ unittest
 
 unittest
 {
-    const auto corePath = tempFile(__LINE__, __FILE_FULL_PATH__);
+    const auto corePath = tempFile();
     const auto coreCtl = setupCoreCtl(corePath);
     scope (exit)
         executeShell(format("rm -rf %s", corePath));
 
-    auto dumpPath = tempFile(__LINE__, __FILE_FULL_PATH__);
+    auto dumpPath = tempFile();
     scope (exit)
         remove(dumpPath);
 
@@ -247,7 +247,7 @@ unittest
         savedStdout.restoreFd(stdout);
 
     // Setup stdout so we can verify the output.
-    auto dummyStdoutPath = tempFile(__LINE__, __FILE_FULL_PATH__);
+    auto dummyStdoutPath = tempFile();
     scope (exit)
         remove(dummyStdoutPath);
     stdout.reopen(dummyStdoutPath, "w");
@@ -269,13 +269,13 @@ unittest
     scope (exit)
         savedStdout.restoreFd(stdout);
 
-    const auto corePath = tempFile(__LINE__, __FILE_FULL_PATH__);
+    const auto corePath = tempFile();
     const auto coreCtl = setupCoreCtl(corePath);
     scope (exit)
         executeShell(format("rm -rf %s", corePath));
 
     // Setup stdout so we can verify the output.
-    auto dummyStdoutPath = tempFile(__LINE__, __FILE_FULL_PATH__);
+    auto dummyStdoutPath = tempFile();
     scope (exit)
         remove(dummyStdoutPath);
     stdout.reopen(dummyStdoutPath, "w");
