@@ -197,7 +197,7 @@ unittest
     const auto corePath = tempFile(__LINE__, __FILE_FULL_PATH__);
     auto coreCtl = setupCoreCtl(corePath);
     scope (exit)
-        rmdirRecurse(corePath);
+        executeShell(format("rm -rf %s", corePath));
 
     // Setup stdout so we can verify the output.
     auto dummyStdoutPath = tempFile(__LINE__, __FILE_FULL_PATH__);
@@ -220,7 +220,7 @@ unittest
 {
     const auto corePath = tempFile(__LINE__, __FILE_FULL_PATH__);
     scope (exit)
-        rmdirRecurse(corePath);
+        executeShell(format("rm -rf %s", corePath));
     auto coreCtl = setupCoreCtl(corePath);
     assert(coreCtl.ensureCoredump(0));
     assert(!coreCtl.ensureCoredump(1));
@@ -231,7 +231,7 @@ unittest
     const auto corePath = tempFile(__LINE__, __FILE_FULL_PATH__);
     const auto coreCtl = setupCoreCtl(corePath);
     scope (exit)
-        rmdirRecurse(corePath);
+        executeShell(format("rm -rf %s", corePath));
 
     auto dumpPath = tempFile(__LINE__, __FILE_FULL_PATH__);
     scope (exit)
@@ -272,7 +272,7 @@ unittest
     const auto corePath = tempFile(__LINE__, __FILE_FULL_PATH__);
     const auto coreCtl = setupCoreCtl(corePath);
     scope (exit)
-        rmdirRecurse(corePath);
+        executeShell(format("rm -rf %s", corePath));
 
     // Setup stdout so we can verify the output.
     auto dummyStdoutPath = tempFile(__LINE__, __FILE_FULL_PATH__);
