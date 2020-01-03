@@ -134,7 +134,7 @@ uint getGid()
 /// Exception thrown if there's no CoredumpDir created yet and we're not in readOnly mode.
 class NoCoredumpDir : Exception
 {
-    this(string msg, string file = __FILE__, size_t line = __LINE__)
+    this(string msg, string file = __FILE__, size_t line = __LINE__) @safe
     {
         super(msg, file, line);
     }
@@ -143,7 +143,7 @@ class NoCoredumpDir : Exception
 /// Exception thrown if we don't have sufficient permissions to access the `CoredumpDir`
 class NoPermsCoredumpDir : Exception
 {
-    this(string msg, string file = __FILE__, size_t line = __LINE__)
+    this(string msg, string file = __FILE__, size_t line = __LINE__) @safe
     {
         super(msg, file, line);
     }

@@ -35,7 +35,7 @@ immutable auto configPath = buildPath(confPath, "corecollector.conf");
 
 class MissingFileConfigurationException : Exception
 {
-    this(string msg, string file = __FILE__, size_t line = __LINE__)
+    this(string msg, string file = __FILE__, size_t line = __LINE__) @safe
     {
         super(msg, file, line);
     }
@@ -43,7 +43,7 @@ class MissingFileConfigurationException : Exception
 
 class UnknownKeyConfigurationException : Exception
 {
-    this(string msg, string file = __FILE__, size_t line = __LINE__)
+    this(string msg, string file = __FILE__, size_t line = __LINE__) @safe
     {
         super(msg, file, line);
     }
