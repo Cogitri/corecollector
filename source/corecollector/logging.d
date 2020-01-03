@@ -101,7 +101,7 @@ unittest
     import std.algorithm : count;
     import std.file : readText, remove;
 
-    const auto testLogPath = tempFile(__LINE__, __FILE_FULL_PATH__);
+    const auto testLogPath = tempFile();
     scope (exit)
         remove(testLogPath);
 

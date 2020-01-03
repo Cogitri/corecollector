@@ -387,7 +387,7 @@ version (unittest_manual)
         }
     }
 
-    string tempFile(in int line, in string file)
+    string tempFile(in int line = __LINE__, in string file = __FILE_FULL_PATH__)
     {
         string UUID = sha1UUID(line.to!string ~ file ~ Clock.currTime().toString()).toString();
         auto testDir = buildPath(tempDir(), "corecollectorTests");
@@ -402,7 +402,7 @@ version (unittest_manual)
 ///
 unittest
 {
-    auto dummyStdoutPath = tempFile(__LINE__, __FILE_FULL_PATH__);
+    auto dummyStdoutPath = tempFile();
     scope (exit)
         remove(dummyStdoutPath);
     auto savedStdout = new RestoreFd(stdout);
@@ -474,7 +474,7 @@ unittest
 
 unittest
 {
-    auto corePath = tempFile(__LINE__, __FILE_FULL_PATH__);
+    auto corePath = tempFile();
 
     scope (exit)
         executeShell(format("rm -rf %s", corePath));
@@ -494,7 +494,7 @@ unittest
         savedStdin.restoreFd(stdin);
     }
 
-    auto dummyDumpPath = tempFile(__LINE__, __FILE_FULL_PATH__);
+    auto dummyDumpPath = tempFile();
     scope (exit)
     {
         remove(dummyDumpPath);
@@ -504,7 +504,7 @@ unittest
     coredumpFile.write(dummyCoredump);
     coredumpFile.close(); // Setup stdin so this can we can read from it in addCoredump()
     stdin.reopen(dummyDumpPath, "r");
-    auto corePath = tempFile(__LINE__, __FILE_FULL_PATH__);
+    auto corePath = tempFile();
 
     scope (exit)
         executeShell(format("rm -rf %s", corePath));
@@ -524,7 +524,7 @@ unittest
 
 unittest
 {
-    auto corePath = tempFile(__LINE__, __FILE_FULL_PATH__);
+    auto corePath = tempFile();
 
     scope (exit)
         executeShell(format("rm -rf %s", corePath));
@@ -541,7 +541,7 @@ unittest
         savedStdin.restoreFd(stdin);
     }
 
-    auto dummyDumpPath = tempFile(__LINE__, __FILE_FULL_PATH__);
+    auto dummyDumpPath = tempFile();
     scope (exit)
     {
         remove(dummyDumpPath);
@@ -556,7 +556,7 @@ unittest
     coredumpFileDet.close();
     // Setup stdin so this can we can read from it in addCoredump()
     stdin.reopen(dummyDumpPath, "r");
-    auto corePath = tempFile(__LINE__, __FILE_FULL_PATH__);
+    auto corePath = tempFile();
 
     scope (exit)
         executeShell(format("rm -rf %s", corePath));
@@ -578,7 +578,7 @@ unittest
         savedStdin.restoreFd(stdin);
     }
 
-    auto dummyDumpPath = tempFile(__LINE__, __FILE_FULL_PATH__);
+    auto dummyDumpPath = tempFile();
     scope (exit)
     {
         remove(dummyDumpPath);
@@ -593,7 +593,7 @@ unittest
     coredumpFileDet.close();
     // Setup stdin so this can we can read from it in addCoredump()
     stdin.reopen(dummyDumpPath, "r");
-    auto corePath = tempFile(__LINE__, __FILE_FULL_PATH__);
+    auto corePath = tempFile();
 
     scope (exit)
         executeShell(format("rm -rf %s", corePath));
