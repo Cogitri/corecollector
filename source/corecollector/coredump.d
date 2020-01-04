@@ -172,10 +172,11 @@ class CoredumpDir
     }
 
     /// ctor to directly construct a `CoredumpDir` from a JSON value containing multiple `Coredump`s.
-    this(in JSONValue json)
+    this(in JSONValue json) @safe
     {
         tracef("Constructing CoredumpDir from JSON %s", json);
-        foreach (x; json["coredumps"].array)
+        // Be careful not overwrite the array pointer here. See `JSONValue.array`'s docs for why.
+        foreach (x; (()@trusted => json["coredumps"].array)())
         {
             coredumps ~= new Coredump(x);
         }
@@ -215,11 +216,12 @@ class CoredumpDir
     }
 
     /// Convert the `CoredumpDir` to a `JSONValue`
-    JSONValue toJson() const
+    JSONValue toJson() const @safe
     {
         return JSONValue([
-                "coredumps": JSONValue(this.coredumps.map!(p => p.toJson)
-                    .array),
+                // Be careful not to modify the array pointer here. See `JSONValue.array`'s docs.
+                "coredumps": JSONValue((() @trusted => this.coredumps.map!(p => p.toJson)
+                    .array)()),
                 "dirSize": JSONValue(this.dirSize),
                 ]);
     }
@@ -338,13 +340,13 @@ class CoredumpDir
     }
 
     /// Write the configuration file of the `CoredumpDir` to the `configPath`.
-    void writeConfig() const
+    void writeConfig() const @safe
     {
         auto coredumpJson = this.toJson().toString();
         writeConfig(coredumpJson);
     }
 
-    private void writeConfig(in string JSONConfig) const
+    private void writeConfig(in string JSONConfig) const @safe
     {
         auto path = buildPath(targetPath, configName);
         tracef("Writing CoredumpDir config '%s' to path '%s'", JSONConfig, path);
@@ -387,7 +389,8 @@ version (unittest_manual)
         }
     }
 
-    string tempFile(in int line = __LINE__, in string file = __FILE_FULL_PATH__)
+    /// Return a `string` to the name of a (not created) temporary file.
+    string tempFile(in int line = __LINE__, in string file = __FILE_FULL_PATH__) @safe
     {
         string UUID = sha1UUID(line.to!string ~ file ~ Clock.currTime().toString()).toString();
         auto testDir = buildPath(tempDir(), "corecollectorTests");
