@@ -167,7 +167,7 @@ class Options
     }
 }
 
-unittest
+@safe unittest
 {
     import std.array : array;
     import std.stdio;

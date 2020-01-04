@@ -132,7 +132,7 @@ class CoreCtl
     }
 
     /// Open coredump `coreNum` in debugger
-    void debugCore(in uint coreNum) const
+    void debugCore(in uint coreNum) const @safe
     {
         enforce!NoSuchCoredumpException(ensureCoredump(coreNum),
                 format("Coredump number %s doesn't exist!", coreNum + humansCountFromOne));
@@ -145,7 +145,7 @@ class CoreCtl
     }
 
     /// Print information about coredump `coreNum`
-    void infoCore(in uint coreNum) const
+    void infoCore(in uint coreNum) const @safe
     {
         enforce!NoSuchCoredumpException(ensureCoredump(coreNum),
                 format("Coredump number %s doesn't exist!", coreNum + humansCountFromOne));

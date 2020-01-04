@@ -56,7 +56,7 @@ class SyslogLogger : FileLogger
 }
 
 /// Convert an enum to the respective syslog log level.
-auto toSyslogLevel(LogLevel lv)
+auto toSyslogLevel(LogLevel lv) @safe
 {
     final switch (lv) with (LogLevel)
     {
@@ -84,7 +84,7 @@ void setupLogging(const LogLevel l, File logFile) @safe
     sharedLog = new SyslogLogger(l, logFile);
 }
 
-unittest
+@safe unittest
 {
     assert(LOG_DEBUG == toSyslogLevel(LogLevel.trace));
     assert(LOG_DEBUG == toSyslogLevel(LogLevel.all));
@@ -95,7 +95,7 @@ unittest
     assert(LOG_ALERT == toSyslogLevel(LogLevel.fatal));
 }
 
-unittest
+@safe unittest
 {
     import corecollector.coredump : tempFile;
     import std.algorithm : count;
