@@ -144,6 +144,25 @@ class CoreCtl
             wait(debuggerPid);
     }
 
+    /// Print the backtrace of the coredump `coreNum` to stdout
+    void backtraceCore(in uint coreNum) const @safe
+    {
+        enforce!NoSuchCoredumpException(ensureCoredump(coreNum),
+                format("Coredump number %s doesn't exist!", coreNum + humansCountFromOne));
+
+        auto corePath = getCorePath(coreNum);
+        auto exePath = getExePath(coreNum);
+        immutable auto gdbArgs = [
+            "-ex", "set width 0", "-ex", "set height 0", "-ex", "set verbose off",
+            "-ex", "bt"
+        ];
+        auto debuggerPid = spawnProcess(["gdb", "--batch"] ~ gdbArgs ~ [
+                exePath, corePath
+                ]);
+        scope (exit)
+            wait(debuggerPid);
+    }
+
     /// Print information about coredump `coreNum`
     void infoCore(in uint coreNum) const @safe
     {
