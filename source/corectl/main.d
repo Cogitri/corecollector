@@ -138,6 +138,17 @@ int main(string[] args)
             return 1;
         }
         break;
+    case "backtrace":
+        try
+        {
+            coreCtl.backtraceCore(options.id);
+        }
+        catch (NoSuchCoredumpException e)
+        {
+            stderr.writeln(e.msg);
+            return 1;
+        }
+        break;
     default:
         stderr.writefln("Unknown operation %s\n", options.mode);
         return 1;

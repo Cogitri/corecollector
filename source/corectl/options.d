@@ -35,6 +35,7 @@ Usage:
 List and interact with coredumps
 
 Subcommands:
+  backtrace [ID]    - Print the backtrace of the coredump identified by ID.
   debug [ID]        - Open the coredump identified by ID in a debugger.
   dump  [ID] [FILE] - Dump the coredump identified by ID to file denoted by FILE.
                       Defaults to 'stdout'.
@@ -110,6 +111,7 @@ class Options
                     format("Didn't expect the additional arguments %s to subcommand 'list'",
                         args.remove(tuple(0, 2))));
             break;
+        case "backtrace":
         case "debug":
         case "info":
             enforce!InsufficientArgLengthException(args.length >= 3,
@@ -206,6 +208,17 @@ class Options
     args = array(["corectl", "info", "0"]);
     assertThrown!BadIdException(new Options(args));
     args = array(["corectl", "info", "badid"]);
+    assertThrown!BadIdException(new Options(args));
+
+    args = array(["corectl", "backtrace", "1"]);
+    auto optionsBt = new Options(args);
+    assert(optionsBt.id == 0);
+    assert(optionsBt.mode == "backtrace");
+    args ~= "unexpectedarg";
+    assertThrown!UnexpectedArgumentException(new Options(args));
+    args = array(["corectl", "backtrace", "0"]);
+    assertThrown!BadIdException(new Options(args));
+    args = array(["corectl", "backtrace", "badid"]);
     assertThrown!BadIdException(new Options(args));
 
     args = array(["corectl", "dump", "1"]);
