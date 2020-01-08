@@ -238,7 +238,7 @@ class CoredumpDir
             const auto coredumpSize = getSize(coredumpPath) / 1000;
             if (this.maxCoredumpSize != 0 && coredumpSize > this.maxCoredumpSize)
             {
-                infof("Coredump '%s' os too big, removing...", coredump);
+                infof("Coredump '%s' is too big, removing...", coredump);
                 remove(coredumpPath);
             }
             else
