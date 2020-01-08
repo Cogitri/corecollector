@@ -58,7 +58,16 @@ int main(string[] args)
         writeln(corecollector.globals.corecollectorVersion);
         return 0;
     }
-    startLogging(options.debugLevel, stderr);
+
+    try
+    {
+        startLogging(options.debugLevel, stderr);
+    }
+    catch (InvalidLogLevelException e)
+    {
+        stderr.writeln(e.msg);
+        return 1;
+    }
 
     Configuration conf;
 
@@ -177,7 +186,7 @@ private void startLogging(int debugLevel, File logFile) @safe
         logLevel = LogLevel.trace;
         break;
     default:
-        assert(0, format("Invalid loglevel '%s'", debugLevel));
+        throw new InvalidLogLevelException(format("Invalid loglevel '%s'", debugLevel));
     }
 
     setupLogging(cast(const) logLevel, logFile);

@@ -28,9 +28,19 @@ else
     import core.sys.posix.syslog;
 }
 
+import std.exception;
 import std.experimental.logger;
 import std.stdio;
 import std.string;
+
+/// Exception thrown if there's no CoredumpDir created yet and we're not in readOnly mode.
+class InvalidLogLevelException : Exception
+{
+    this(string msg, string file = __FILE__, size_t line = __LINE__) @safe
+    {
+        super(msg, file, line);
+    }
+}
 
 /// This `Logger` implementation is basically a `FileLogger` but also
 /// logs to syslog.
@@ -74,7 +84,8 @@ auto toSyslogLevel(LogLevel lv) @safe
     case fatal:
         return LOG_ALERT;
     case off:
-        assert(0);
+        throw new InvalidLogLevelException(
+                "Syslog doesn't support no logging. Please check this beforehand.");
     }
 }
 
@@ -112,4 +123,9 @@ void setupLogging(const LogLevel l, File logFile) @safe
     const auto logFileNumLines = readText(testLogPath).count('\n');
     assert(expectedVal == logFileNumLines, format("Expected %d, got %d",
             expectedVal, logFileNumLines));
+}
+
+@safe unittest
+{
+    assertThrown!InvalidLogLevelException(toSyslogLevel(LogLevel.off));
 }
