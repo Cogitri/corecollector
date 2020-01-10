@@ -166,6 +166,9 @@ class CoredumpDir
     /// Maximum size of a single coredump. Measured in KByte.
     ulong maxCoredumpSize;
 
+    /// FD of the config file. Used of locking/unlocking of the file.
+    private File configLockFile;
+
     private this() @safe
     {
         this.coredumps = new Coredump[0];
@@ -191,7 +194,9 @@ class CoredumpDir
         }
     }
 
-    /// ctor to construct a `CoredumpDir` from a `targetPath` in which a `coredumps.json` is contained
+    /// ctor to construct a `CoredumpDir` from a `targetPath` in which a `coredumps.json` is contained. Please be mindful
+    /// that `CoredumpDir` locks the configFile if you pass in `readOnly = false`. It will be unlocked during
+    /// `CoredumpDir.writeConfig`, if you specify `unlockFile = true` (the default).
     this(in string targetPath, in bool readOnly)
     {
         this.readOnly = readOnly;
@@ -199,15 +204,28 @@ class CoredumpDir
         auto configPath = buildPath(targetPath, this.configName);
         this.ensureDir(configPath);
 
+        // If we plan to write to the config file, we'll have to lock it to ensure we don't interfere
+        // with another corehelper running.
+        if (!readOnly)
+        {
+            tracef("Trying to acquire lock on config file %s", configPath);
+            this.configLockFile = File(configPath, "a+");
+            this.configLockFile.lock();
+            tracef("Successfully acquired lock on config file %s.", configPath);
+        }
+
         tracef("Reading coredump file from path '%s'...", configPath);
-        auto coredump_text = readText(configPath);
-        tracef("Parsing text '%s' as JSON...", coredump_text);
-        auto coredump_json = parseJSON(coredump_text);
-        this(coredump_json);
+
+        string coredumpText = readText(configPath);
+        tracef("Parsing text '%s' as JSON...", coredumpText);
+        auto coredumpJSON = parseJSON(coredumpText);
+        this(coredumpJSON);
     }
 
     /// ctor to construct a `CoredumpDir` from a `targetPath` in which a `coredumps.json` is contained.
-    /// Also specify how big the `CoredumpDir` may get, 0 meaning no limit.
+    /// Also specify how big the `CoredumpDir` may get, 0 meaning no limit. Please be mindful
+    /// that `CoredumpDir` locks the configFile if you pass in `readOnly = false`. It will be unlocked
+    /// during `CoredumpDir.writeConfig`, if you specify `unlockFile = true` (the default).
     this(in string targetPath, in bool readOnly, in ulong maxDirSize, in ulong maxCoredumpSize)
     {
         this.maxDirSize = maxDirSize;
@@ -339,11 +357,17 @@ class CoredumpDir
         }
     }
 
-    /// Write the configuration file of the `CoredumpDir` to the `configPath`.
-    void writeConfig() const @safe
+    /// Write the configuration file of the `CoredumpDir` to the `configPath`. Additionally also
+    /// unlock the configFile if `unlockFile = true` and the `CoredumpDir` isn't `readOnly`, meaning
+    /// other instances are permitted to read and write to the file again.
+    void writeConfig(bool unlockFile = true)
     {
         auto coredumpJson = this.toJson().toString();
         writeConfig(coredumpJson);
+        if (!this.readOnly && unlockFile)
+        {
+            this.configLockFile.unlock();
+        }
     }
 
     private void writeConfig(in string JSONConfig) const @safe
