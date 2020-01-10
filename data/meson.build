@@ -26,7 +26,6 @@ if scdoc.found()
     ]
     foreach filename : man_files
         topic = filename.split('.')[-3].split('/')[-1]
-        message(topic)
         if topic.contains('_')
             topic = topic.split('_')[0] + '.' + topic.split('_')[1]
         endif
