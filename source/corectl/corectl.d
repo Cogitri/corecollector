@@ -101,6 +101,28 @@ class CoreCtl
         return buildPath(coredumpDir.coredumps[coreNum].exePath);
     }
 
+    /// Decompresses the coredump to a temporary directory. Returns the
+    /// path to the coredump
+    string decompressCore(in uint coreNum) const
+    {
+        auto coredump = coredumpDir.coredumps[coreNum];
+        const auto coreFileName = coredump.generateCoredumpName();
+        const auto corePath = buildPath(tempDir(), coreFileName);
+        auto coreFile = File(corePath, "w");
+        scope (exit)
+            coreFile.close();
+        decompressCore(coreNum, coreFile);
+        return corePath;
+    }
+
+    /// Decompresses the coredump to a set `File`. The `File` must be in
+    /// writeable
+    void decompressCore(in uint coreNum, File targetFile) const
+    {
+        auto coredump = coredumpDir.coredumps[coreNum];
+        coredump.decompressCore(coredumpDir.getTargetPath(), targetFile);
+    }
+
     /// Dump coredump `coreNum` to `targetPath`
     void dumpCore(in uint coreNum, in string targetPath) const
     {
@@ -123,34 +145,62 @@ class CoreCtl
             break;
         }
 
-        auto sourceFile = File(getCorePath(coreNum), "r");
-
-        foreach (ubyte[] buffer; sourceFile.byChunk(new ubyte[4096]))
+        try
         {
-            targetFile.rawWrite(buffer);
+            this.decompressCore(coreNum, targetFile);
+        }
+        catch (NoCompressionException e)
+        {
+            auto sourceFile = File(getCorePath(coreNum), "r");
+
+            foreach (ubyte[] buffer; sourceFile.byChunk(new ubyte[4096]))
+            {
+                targetFile.rawWrite(buffer);
+            }
         }
     }
 
     /// Open coredump `coreNum` in debugger
-    void debugCore(in uint coreNum) const @safe
+    void debugCore(in uint coreNum) const
     {
         enforce!NoSuchCoredumpException(ensureCoredump(coreNum),
                 format("Coredump number %s doesn't exist!", coreNum + humansCountFromOne));
 
-        auto corePath = getCorePath(coreNum);
-        auto exePath = getExePath(coreNum);
+        string corePath;
+
+        try
+        {
+            corePath = this.decompressCore(coreNum);
+        }
+        catch (NoCompressionException e)
+        {
+            corePath = getCorePath(coreNum);
+        }
+
+        const auto exePath = getExePath(coreNum);
         auto debuggerPid = spawnProcess(["gdb", exePath, corePath]);
+
         scope (exit)
             wait(debuggerPid);
     }
 
     /// Print the backtrace of the coredump `coreNum` to stdout
-    void backtraceCore(in uint coreNum) const @safe
+    void backtraceCore(in uint coreNum) const
     {
         enforce!NoSuchCoredumpException(ensureCoredump(coreNum),
                 format("Coredump number %s doesn't exist!", coreNum + humansCountFromOne));
 
-        auto corePath = getCorePath(coreNum);
+        string corePath;
+
+        try
+        {
+            corePath = this.decompressCore(coreNum);
+        }
+        catch (NoCompressionException e)
+        {
+            corePath = getCorePath(coreNum);
+        }
+
         auto exePath = getExePath(coreNum);
         immutable auto gdbArgs = [
             "-ex", "set width 0", "-ex", "set height 0", "-ex", "set verbose off",
@@ -199,7 +249,8 @@ version (unittest)
         mkdir(corePath);
 
         auto coredump = new Coredump(1000, 1000, 1000, 6,
-                SysTime.fromISOExtString("2018-01-01T10:30:00Z"), "testExe", "/usr/bin/testExe");
+                SysTime.fromISOExtString("2018-01-01T10:30:00Z"), "testExe",
+                "/usr/bin/testExe", "none");
         auto coredumpDir = new CoredumpDir(corePath, false);
         coredumpDir.addCoredump(coredump);
         auto coreCtl = new CoreCtl(coredumpDir);

@@ -49,6 +49,14 @@ class UnknownKeyConfigurationException : Exception
     }
 }
 
+class BadCompressionConfigurationException : Exception
+{
+    this(string msg, string file = __FILE__, size_t line = __LINE__) @safe
+    {
+        super(msg, file, line);
+    }
+}
+
 /// The `Configuration` class, which holds the configuration options
 /// both corehelper and corectl need to know
 class Configuration
@@ -115,7 +123,18 @@ class Configuration
                 this.debugEnabled = val.to!bool;
                 break;
             default:
-                enforce!UnknownKeyConfigurationException(0, "Unknown configuration key '%s'!", val);
+                throw new UnknownKeyConfigurationException(format("Unknown configuration key '%s'!",
+                        val));
+            }
+
+            switch (this.compression)
+            {
+            case "none":
+            case "zlib":
+                break;
+            default:
+                throw new BadCompressionConfigurationException(format("Unknown compression '%s'",
+                        this.compression));
             }
         }
     }
@@ -187,4 +206,46 @@ unittest
     configFile.write(testConfig);
     configFile.close();
     assertThrown!UnknownKeyConfigurationException(new Configuration(testConfigPath));
+}
+
+unittest
+{
+    import corecollector.coredump : tempFile;
+
+    immutable auto testConfig = "compression = zlib";
+    auto testConfigPath = tempFile();
+    auto configFile = File(testConfigPath, "w");
+    scope (exit)
+        remove(testConfigPath);
+    configFile.write(testConfig);
+    configFile.close();
+    new Configuration(testConfigPath);
+}
+
+unittest
+{
+    import corecollector.coredump : tempFile;
+
+    immutable auto testConfig = "compression = none";
+    auto testConfigPath = tempFile();
+    auto configFile = File(testConfigPath, "w");
+    scope (exit)
+        remove(testConfigPath);
+    configFile.write(testConfig);
+    configFile.close();
+    new Configuration(testConfigPath);
+}
+
+unittest
+{
+    import corecollector.coredump : tempFile;
+
+    immutable auto testConfig = "compression = bad";
+    auto testConfigPath = tempFile();
+    auto configFile = File(testConfigPath, "w");
+    scope (exit)
+        remove(testConfigPath);
+    configFile.write(testConfig);
+    configFile.close();
+    assertThrown!BadCompressionConfigurationException(new Configuration(testConfigPath));
 }
