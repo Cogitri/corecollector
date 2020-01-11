@@ -49,7 +49,7 @@ class CoreHelper
     {
         this.config = config;
         this.opt = opt;
-        this.coredump = this.opt.toCoredump;
+        this.coredump = this.opt.toCoredump(this.config.compression);
     }
 
     /// Simple check to see if we can write a file to the coredumpDir.
