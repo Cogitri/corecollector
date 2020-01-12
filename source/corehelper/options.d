@@ -19,6 +19,7 @@
 
 module corehelper.options;
 
+import corecollector.configuration : Compression;
 import corecollector.coredump;
 
 import std.array;
@@ -83,7 +84,7 @@ class Options
     }
 
     /// Convert a `Options` to a `Coredump`
-    Coredump toCoredump(in string compression) const @safe
+    Coredump toCoredump(in Compression compression) const @safe
     {
         // The kernel sends `!` instead of `/`: http://man7.org/linux/man-pages/man5/core.5.html
         auto slashPath = this.exePath.replace("!", "/");
