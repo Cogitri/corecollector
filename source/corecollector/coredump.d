@@ -19,6 +19,7 @@
 
 module corecollector.coredump;
 
+import corecollector.configuration : Compression;
 static import corecollector.globals;
 
 import core.stdc.errno;
@@ -72,11 +73,11 @@ class Coredump
     /// The name under which we're going to save the coredump
     const private string filename;
     /// Compression used for this coredump
-    const private string compression;
+    const private Compression compression;
 
     /// ctor to construct a `Coredump`
     this(in long uid, in long gid, in long pid, in long sig, in SysTime timestamp,
-            in string exe, in string exePath, in string compression) @safe
+            in string exe, in string exePath, in Compression compression) @safe
     {
         this.uid = uid;
         this.pid = pid;
@@ -94,16 +95,24 @@ class Coredump
     {
         tracef("Constructing Coredump from JSON: %s", json);
 
-        string usedCompression;
+        Compression usedCompression;
         // Fallback if no compression key is set yet since we've only
         // introduced that after v0.2.0
         try
         {
-            usedCompression = json["compression"].str;
+            const auto usedCompressionString = json["compression"].str;
+            if (usedCompressionString == "zlib")
+            {
+                usedCompression = Compression.Zlib;
+            }
+            else
+            {
+                usedCompression = Compression.None;
+            }
         }
         catch (JSONException e)
         {
-            usedCompression = "none";
+            usedCompression = Compression.None;
         }
 
         SysTime time = std.datetime.SysTime.fromISOString(json["timestamp"].str);
@@ -119,12 +128,12 @@ class Coredump
             ~ this.gid.to!string ~ "-" ~ this.timestamp.toISOString;
         auto filenameFinal = filename ~ sha1UUID(filename).to!string;
 
-        switch (this.compression)
+        final switch (this.compression) with (Compression)
         {
-        case "zlib":
+        case Zlib:
             filenameFinal ~= ".gz";
             break;
-        default:
+        case None:
             break;
         }
 
@@ -135,6 +144,18 @@ class Coredump
     /// Convert the `Coredump` to a `JSONValue`
     JSONValue toJson() const @safe
     {
+        string compressionString;
+
+        final switch (this.compression) with (Compression)
+        {
+        case Zlib:
+            compressionString = "zlib";
+            break;
+        case None:
+            compressionString = "none";
+            break;
+        }
+
         return JSONValue([
                 "exe": JSONValue(this.exe),
                 "exePath": JSONValue(this.exePath),
@@ -144,16 +165,16 @@ class Coredump
                 "sig": JSONValue(this.sig),
                 "timestamp": JSONValue(this.timestamp.toISOString),
                 "uid": JSONValue(this.uid),
-                "compression": JSONValue(this.compression),
+                "compression": JSONValue(compressionString),
                 ]);
     }
 
     /// Decompress a core to the supplied path. Errors if core is not compressed.
     void decompressCore(in string corePath, File decompressedFile) const
     {
-        switch (this.compression)
+        switch (this.compression) with (Compression)
         {
-        case "zlib":
+        case Zlib:
             auto decmp = new UnCompress;
             auto coreFile = File(buildPath(corePath, this.filename), "r");
             foreach (chunk; coreFile.byChunk(4096).map!(x => decmp.uncompress(x)))
@@ -327,15 +348,15 @@ class CoredumpDir
         }
 
         tracef("Writing coredump to path '%s'", coredumpPath);
-        switch (coredump.compression)
+        final switch (coredump.compression) with (Compression)
         {
-        case "none":
+        case None:
             foreach (ubyte[] buffer; stdin.byChunk(new ubyte[4096]))
             {
                 target.rawWrite(buffer);
             }
             break;
-        case "zlib":
+        case Zlib:
             auto cmp = new Compress;
             foreach (chunk; stdin.byChunk(4096).map!(x => cmp.compress(x)))
             {
@@ -344,8 +365,6 @@ class CoredumpDir
             //Write remaining data
             target.rawWrite(cmp.flush());
             break;
-        default:
-            assert(0);
         }
     }
 
@@ -518,8 +537,8 @@ unittest
 {
     import std.format : format;
 
-    auto core = new Coredump(1000, 1000, 14_948, 6,
-            SysTime.fromISOExtString("2018-01-01T10:30:00Z"), "Xwayland", "/usr/bin/", "none");
+    auto core = new Coredump(1000, 1000, 14_948, 6, SysTime.fromISOExtString(
+            "2018-01-01T10:30:00Z"), "Xwayland", "/usr/bin/", Compression.None);
 
     auto validString = `{"compression":"none", "exe":"Xwayland","exePath":"\/usr\/bin\/","filename":"Xwayland-6-14948-1000-1000-20180101T103000Z993b67e4-7be8-5214-abd5-c26367a1167f", "gid":1000,"pid":14948,"sig":6,"timestamp":"20180101T103000Z","uid":1000}`;
     auto validJSON = parseJSON(validString);
@@ -538,10 +557,10 @@ unittest
 {
     import std.format : format;
 
-    auto core1 = new Coredump(1, 1, 1, 1,
-            SysTime.fromISOExtString("2018-01-01T11:30:00Z"), "test", "/usr/bin/", "none");
-    auto core2 = new Coredump(1, 1, 1, 1,
-            SysTime.fromISOExtString("2018-01-01T10:30:00Z"), "test", "/usr/bin/", "none");
+    auto core1 = new Coredump(1, 1, 1, 1, SysTime.fromISOExtString("2018-01-01T11:30:00Z"),
+            "test", "/usr/bin/", Compression.None);
+    auto core2 = new Coredump(1, 1, 1, 1, SysTime.fromISOExtString("2018-01-01T10:30:00Z"),
+            "test", "/usr/bin/", Compression.None);
     auto coredumpDir = new CoredumpDir();
     coredumpDir.coredumps ~= core1;
     coredumpDir.coredumps ~= core2;
@@ -564,14 +583,14 @@ unittest
 unittest
 {
     const auto core = new Coredump(1000, 1000, 1000, 6,
-            SysTime.fromISOExtString("2018-01-01T10:30:00Z"), "exe", "/usr/bin", "none");
+            SysTime.fromISOExtString("2018-01-01T10:30:00Z"), "exe", "/usr/bin", Compression.None);
     auto generatedName = core.generateCoredumpName();
     auto expectedVal = "exe-6-1000-1000-1000-20180101T103000Z9f09102d-468d-5b63-82d2-d4ecf41e0d41";
     assert(expectedVal == generatedName, format("Expected %s, got %s",
             expectedVal, generatedName));
 
     const auto coreCompressed = new Coredump(1000, 1000, 1000, 6,
-            SysTime.fromISOExtString("2018-01-01T10:30:01Z"), "exe", "/usr/bin", "zlib");
+            SysTime.fromISOExtString("2018-01-01T10:30:01Z"), "exe", "/usr/bin", Compression.Zlib);
     auto generatedNameCompressed = coreCompressed.generateCoredumpName();
     auto expectedValCompressed = "exe-6-1000-1000-1000-20180101T103001Z3d04fa99-1b6b-5c1f-b4ea-abf6946daf88.gz";
     assert(expectedValCompressed == generatedNameCompressed,
@@ -615,7 +634,7 @@ unittest
     scope (exit)
         executeShell(format("rm -rf %s", corePath));
     auto coredump = new Coredump(1000, 1000, 1000, 6, SysTime.fromISOExtString(
-            "2018-01-01T10:30:00Z"), "testExe", "!usr!bin!testExe", "none");
+            "2018-01-01T10:30:00Z"), "testExe", "!usr!bin!testExe", Compression.None);
     coredump.generateCoredumpName();
     auto coreFullPath = buildPath(corePath, coredump.generateCoredumpName());
     auto coredumpDir = new CoredumpDir(corePath, false);
@@ -667,7 +686,7 @@ unittest
     scope (exit)
         executeShell(format("rm -rf %s", corePath));
     auto coredump = new Coredump(1000, 1000, 1000, 6, SysTime.fromISOExtString(
-            "2018-01-01T10:30:00Z"), "testExe", "!usr!bin!testExe", "none");
+            "2018-01-01T10:30:00Z"), "testExe", "!usr!bin!testExe", Compression.None);
     auto coreFullPath = buildPath(corePath, coredump.generateCoredumpName());
     auto coredumpDir = new CoredumpDir(corePath, false, 0, 1);
     coredumpDir.addCoredump(coredump);
@@ -704,7 +723,7 @@ unittest
     scope (exit)
         executeShell(format("rm -rf %s", corePath));
     auto coredump = new Coredump(1000, 1000, 1000, 6, SysTime.fromISOExtString(
-            "2018-01-01T10:30:00Z"), "testExe", "!usr!bin!testExe", "none");
+            "2018-01-01T10:30:00Z"), "testExe", "!usr!bin!testExe", Compression.None);
     auto coreFullPath = buildPath(corePath, coredump.generateCoredumpName());
     auto coredumpDir = new CoredumpDir(corePath, false, 0, 10);
     coredumpDir.addCoredump(coredump);
@@ -736,7 +755,7 @@ unittest
     scope (exit)
         executeShell(format("rm -rf %s", corePath));
     auto coredump = new Coredump(1000, 1000, 1000, 6, SysTime.fromISOExtString(
-            "2018-01-01T10:30:00Z"), "testExe", "!usr!bin!testExe", "zlib");
+            "2018-01-01T10:30:00Z"), "testExe", "!usr!bin!testExe", Compression.Zlib);
     auto coreFullPath = buildPath(corePath, coredump.generateCoredumpName());
     auto coredumpDir = new CoredumpDir(corePath, false);
     coredumpDir.addCoredump(coredump);

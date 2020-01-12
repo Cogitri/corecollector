@@ -49,6 +49,8 @@ class CoreHelper
     {
         this.config = config;
         this.opt = opt;
+
+        Compression compression;
         this.coredump = this.opt.toCoredump(this.config.compression);
     }
 

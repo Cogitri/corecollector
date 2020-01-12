@@ -57,12 +57,19 @@ class BadCompressionConfigurationException : Exception
     }
 }
 
+/// The different ways to compress coredumps.
+enum Compression
+{
+    None,
+    Zlib,
+}
+
 /// The `Configuration` class, which holds the configuration options
 /// both corehelper and corectl need to know
 class Configuration
 {
     /// How the user wants to compress coredumps
-    string compression = "none";
+    Compression compression = compression.None;
     /// The size limit for coredumps
     uint maxSize = 0;
     /// The path to place coredumps at
@@ -105,7 +112,18 @@ class Configuration
             switch (strip(text(keyValueArr[0])))
             {
             case "compression":
-                this.compression = val;
+                switch (val)
+                {
+                case "zlib":
+                    this.compression = Compression.Zlib;
+                    break;
+                case "none":
+                    this.compression = Compression.None;
+                    break;
+                default:
+                    throw new BadCompressionConfigurationException(format("Unknown compression '%s'",
+                            this.compression));
+                }
                 break;
             case "maxsize":
                 this.maxSize = val.to!uint;
@@ -126,16 +144,6 @@ class Configuration
                 throw new UnknownKeyConfigurationException(format("Unknown configuration key '%s'!",
                         val));
             }
-
-            switch (this.compression)
-            {
-            case "none":
-            case "zlib":
-                break;
-            default:
-                throw new BadCompressionConfigurationException(format("Unknown compression '%s'",
-                        this.compression));
-            }
         }
     }
 }
@@ -152,8 +160,8 @@ unittest
     configFile.write(testConfig);
     configFile.close();
     auto configTest = new Configuration(testConfigPath);
-    assert(configTest.compression == "none", format("Expected %s, got %s",
-            "none", configTest.compression));
+    assert(configTest.compression == Compression.None,
+            format("Expected %s, got %s", Compression.None, configTest.compression));
     assert(configTest.maxSize == 0, format("Expected %d, got %d", 0, configTest.maxSize));
     assert(configTest.targetPath == "test", format("Expected %s, got %s",
             "test", configTest.targetPath));
@@ -175,8 +183,8 @@ unittest
     configFile.write(testConfig);
     configFile.close();
     auto configTest = new Configuration(testConfigPath);
-    assert(configTest.compression == "none", format("Expected %s, got %s",
-            "none", configTest.compression));
+    assert(configTest.compression == Compression.None,
+            format("Expected %s, got %s", Compression.None, configTest.compression));
     assert(configTest.maxSize == 0, format("Expected %d, got %d", 0, configTest.maxSize));
     assert(configTest.targetPath == "test", format("Expected %s, got %s",
             "test", configTest.targetPath));

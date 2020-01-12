@@ -19,8 +19,9 @@
 
 module corectl.corectl;
 
-import corecollector.globals;
+import corecollector.configuration : Compression;
 import corecollector.coredump;
+import corecollector.globals;
 
 import core.stdc.stdlib;
 
@@ -248,9 +249,8 @@ version (unittest)
 
         mkdir(corePath);
 
-        auto coredump = new Coredump(1000, 1000, 1000, 6,
-                SysTime.fromISOExtString("2018-01-01T10:30:00Z"), "testExe",
-                "/usr/bin/testExe", "none");
+        auto coredump = new Coredump(1000, 1000, 1000, 6, SysTime.fromISOExtString(
+                "2018-01-01T10:30:00Z"), "testExe", "/usr/bin/testExe", Compression.None);
         auto coredumpDir = new CoredumpDir(corePath, false);
         coredumpDir.addCoredump(coredump);
         auto coreCtl = new CoreCtl(coredumpDir);
