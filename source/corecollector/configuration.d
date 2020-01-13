@@ -106,7 +106,7 @@ class Configuration
         auto configFile = File(configPath, "r");
         foreach (line; configFile.byLine())
         {
-            const auto lineWithoutWhitespace = toLower(text(line));
+            const auto lineWithoutWhitespace = text(line);
             if (lineWithoutWhitespace.startsWith('#') || lineWithoutWhitespace.empty())
             {
                 continue;
@@ -116,10 +116,10 @@ class Configuration
             // Allow comments after the value, e.g. 'val = something # comment'
             const auto val = strip(text(keyValueArr[1]).split('#')[0]);
 
-            switch (strip(text(keyValueArr[0])))
+            switch (toLower(strip(text(keyValueArr[0]))))
             {
             case "compression":
-                switch (val)
+                switch (toLower(val))
                 {
                 case "zlib":
                     this.compression = Compression.Zlib;
@@ -170,8 +170,8 @@ unittest
     assert(configTest.compression == Compression.None,
             format("Expected %s, got %s", Compression.None, configTest.compression));
     assert(configTest.maxSize == 0, format("Expected %d, got %d", 0, configTest.maxSize));
-    assert(configTest.targetPath == "test", format("Expected %s, got %s",
-            "test", configTest.targetPath));
+    assert(configTest.targetPath == "/Path/to/CoreCoreDumps",
+            format("Expected %s, got %s", "/Path/to/CoreCoreDumps", configTest.targetPath));
     assert(configTest.logPath == "/var/log/corecollector.log",
             format("Expected %s, got %s", "/var/log/corecollector.log", configTest.logPath));
     assert(configTest.maxDirSize == 0, format("Expected %d, got %d", 0, configTest.maxDirSize));
