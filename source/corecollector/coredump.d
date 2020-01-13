@@ -769,4 +769,14 @@ unittest
     ubyte[] dst = coreFile.rawRead(new ubyte[4096]);
     auto result = cast(ubyte[]) uncompress(dst);
     assert(result == expectedVal);
+
+    auto decompressedFilePath = tempFile();
+    scope (exit)
+        remove(decompressedFilePath);
+    auto decompressedFile = File(decompressedFilePath, "w");
+    coredump.decompressCore(coredumpDir.getTargetPath(), decompressedFile);
+    decompressedFile.close();
+    auto readDecompressedFile = File(decompressedFilePath, "r");
+    ubyte[] decomp = readDecompressedFile.rawRead(new ubyte[4096]);
+    assert(decomp == result, format("Expected %s, got %s", decomp, result));
 }
