@@ -227,7 +227,7 @@ class CoreCtl
 
 version (unittest)
 {
-    CoreCtl setupCoreCtl(string corePath)
+    CoreCtl setupCoreCtl(string corePath, Compression compression = Compression.None)
     {
         auto savedStdin = new RestoreFd(stdin);
 
@@ -250,7 +250,7 @@ version (unittest)
         mkdir(corePath);
 
         auto coredump = new Coredump(1000, 1000, 1000, 6, SysTime.fromISOExtString(
-                "2018-01-01T10:30:00Z"), "testExe", "/usr/bin/testExe", Compression.None);
+                "2018-01-01T10:30:00Z"), "testExe", "/usr/bin/testExe", compression);
         auto coredumpDir = new CoredumpDir(corePath, false);
         coredumpDir.addCoredump(coredump);
         auto coreCtl = new CoreCtl(coredumpDir);
@@ -361,4 +361,22 @@ unittest
     assert(expectedVal == actualVal, format("Expected %s, got %s", expectedVal, actualVal));
 
     assertThrown!NoSuchCoredumpException(coreCtl.infoCore(1));
+}
+
+unittest
+{
+    auto savedStdout = new RestoreFd(stdout);
+    scope (exit)
+        savedStdout.restoreFd(stdout);
+
+    const auto corePath = tempFile();
+    const auto coreCtl = setupCoreCtl(corePath, Compression.Zlib);
+    scope (exit)
+        executeShell(format("rm -rf %s", corePath));
+
+    const auto coredumpPath = coreCtl.decompressCore(0);
+    // Set in setupCoreCtl
+    immutable expectedVal = "coredump";
+    auto generatedVal = readText(coredumpPath);
+    assert(expectedVal == generatedVal, format("Expected %s, got %s", expectedVal, generatedVal));
 }
