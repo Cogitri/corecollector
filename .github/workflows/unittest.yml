@@ -29,7 +29,7 @@ jobs:
         run: pip3 install meson
 
       - name: Test meson build
-        run: meson build && ninja -C build test
+        run: meson build && meson test --verbose -C build
 
       - name: Run dub tests
         run: |
