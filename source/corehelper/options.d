@@ -93,3 +93,21 @@ class Options
                 this.exe, slashPath, compression);
     }
 }
+
+unittest
+{
+    import std.format : format;
+
+    auto args = array([
+            "thisExe", "-e=testExe", "-X=!usr!bin!testExe", "-g=1000", "-u=1000",
+            "-s=6", "-p=2",
+            format("-t=%s", SysTime.fromISOExtString("2018-01-01T10:30:00Z")
+                .toLocalTime().toUnixTime())
+            ]);
+    auto options = new Options(args);
+    const auto generatedCoredump = options.toCoredump(Compression.Zlib);
+    const auto expectedVal = new Coredump(1000, 1000, 2, 6, SysTime.fromISOExtString("2018-01-01T10:30:00Z")
+            .toLocalTime(), "testExe", "/usr/bin/testExe", Compression.Zlib);
+    assert(expectedVal.toString() == generatedCoredump.toString(),
+            format("Expected %s, got %s", expectedVal, generatedCoredump));
+}
