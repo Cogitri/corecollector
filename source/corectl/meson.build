@@ -15,6 +15,7 @@ corectl_int_test_exe  = executable(
     ['main.d', main_src],
     dependencies: core_lib_test_lib_dep,
     d_module_versions: ['unittest_manual'],
+    native: true,
 )
 
 corectl_test_exe = executable(
@@ -23,6 +24,7 @@ corectl_test_exe = executable(
     dependencies: core_lib_test_lib_dep,
     d_unittest: true,
     d_module_versions: ['unittest_manual'],
+    native: true,
 )
 
 test('corectl-test', corectl_test_exe)

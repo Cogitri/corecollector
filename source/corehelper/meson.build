@@ -16,6 +16,7 @@ corehelper_int_test_exe = executable(
     ['main.d', helper_src],
     dependencies: core_lib_test_lib_dep,
     d_module_versions: ['unittest_manual'],
+    native: true,
 )
 
 corehelper_test_exe = executable(
@@ -24,6 +25,7 @@ corehelper_test_exe = executable(
     dependencies: core_lib_test_lib_dep,
     d_unittest: true,
     d_module_versions: ['unittest_manual'],
+    native: true,
 )
 
 test('corehelper-test', corehelper_test_exe)
