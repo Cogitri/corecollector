@@ -38,6 +38,12 @@ elif compiler_id == 'gcc'
     link_runtime_shared_arg = ['-shared-libphobos']
 endif
 
+gdb = find_program('gdb', native: true, required: false)
+
+if not gdb.found()
+    warning('Couldn\'t find gdb! Please be mindful that it\'s required for tests and during runtime.')
+endif
+
 subdir('source')
 subdir('data')
 subdir('tests')
