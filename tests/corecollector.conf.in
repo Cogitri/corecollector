@@ -1,0 +1,17 @@
+# What compression to use for coredumps.
+# Available choices: none zlib
+compression = none
+# The maximum size of coredumps.
+# Unset or set to 0 to set no size limit.
+# Measured in KByte, must be whole numbers.
+maxSize = 0
+# The path to save coredumps to.
+targetPath = @COREDUMP_PATH@
+# Where to log to. Pass /dev/null to only log to syslog
+logPath = /dev/null
+# Enable debugging
+enableDebug = true
+# The maximum size of the coredumpdir.
+# Unset or set to 0 to set no size limit.
+# Measured in KByte, must be whole numbers.
+maxDirSize = 0
