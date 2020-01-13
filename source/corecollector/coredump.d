@@ -120,6 +120,11 @@ class Coredump
                 json["sig"].integer, time, json["exe"].str, json["exePath"].str, usedCompression);
     }
 
+    override string toString() const
+    {
+        return this.toJson().toString();
+    }
+
     /// Generate a unique filename for a coredump.
     final string generateCoredumpName() const @safe
     {
