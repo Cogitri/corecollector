@@ -40,3 +40,4 @@ endif
 
 subdir('source')
 subdir('data')
+subdir('tests')

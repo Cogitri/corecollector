@@ -31,7 +31,14 @@ import std.stdio;
 import std.string;
 
 /// Path to where the configuration file is located at
-immutable auto configPath = buildPath(confPath, "corecollector.conf");
+version (unittest_manual)
+{
+    alias configPath = testConfigPath;
+}
+else
+{
+    immutable auto configPath = buildPath(confPath, "corecollector.conf");
+}
 
 class MissingFileConfigurationException : Exception
 {
@@ -122,7 +129,7 @@ class Configuration
                     break;
                 default:
                     throw new BadCompressionConfigurationException(format("Unknown compression '%s'",
-                            this.compression));
+                            val));
                 }
                 break;
             case "maxsize":

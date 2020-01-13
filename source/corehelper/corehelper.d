@@ -74,10 +74,12 @@ class CoreHelper
     }
 
     /// Drop privileges to not run as root when we don't have to.
-    private void dropPrivileges(in uint corecollectorUid, in uint corecollectorGid)
+    private void dropPrivileges()
     {
         if (getuid() == 0)
         {
+            auto corecollectorUid = getUid();
+            auto corecollectorGid = getGid();
             errnoEnforce(setgid(corecollectorGid) == 0,
                     format("Failed to drop group to %d", corecollectorGid));
             errnoEnforce(setuid(corecollectorUid) == 0,
@@ -91,9 +93,7 @@ class CoreHelper
         auto coredumpDir = new CoredumpDir(this.config.targetPath, false,
                 this.config.maxDirSize, this.config.maxSize);
 
-        auto corecollectorUid = getUid();
-        auto corecollectorGid = getGid();
-        dropPrivileges(corecollectorUid, corecollectorGid);
+        this.dropPrivileges();
         enforce(ensureDirWriteable(),
                 format("Directory %s isn't writable for user %s! Please make sure it is writeable.",
                     corecollector.globals.coredumpPath, corecollector.globals.user));
