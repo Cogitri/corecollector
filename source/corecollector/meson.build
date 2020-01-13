@@ -42,6 +42,7 @@ core_lib_test_lib = library(
     d_args: '-J' + join_paths(meson.current_source_dir(), 'views'),
     d_module_versions: ['unittest_manual'],
     link_args: [link_runtime_shared_arg],
+    native: true,
 )
 
 core_lib_test_lib_dep = declare_dependency(
@@ -60,6 +61,7 @@ core_lib_test_exe = executable(
     include_directories: src_inc,
     d_module_versions: ['unittest_manual'],
     d_args: '-J' + join_paths(meson.current_source_dir(), 'views'),
+    native: true,
 )
 
 test(

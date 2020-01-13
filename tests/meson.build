@@ -5,6 +5,7 @@ test_env.set('CORECOLLECTOR_CONFIG_PATH', meson.current_build_dir())
 crash_test_exe = executable(
     'crashing_test_exe',
     'crash.d',
+    native: true,
 )
 
 conf_test = configuration_data()
