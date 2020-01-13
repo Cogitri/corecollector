@@ -112,7 +112,7 @@ class CoreCtl
         auto coreFile = File(corePath, "w");
         scope (exit)
             coreFile.close();
-        decompressCore(coreNum, coreFile);
+        this.decompressCore(coreNum, coreFile);
         return corePath;
     }
 
@@ -175,10 +175,10 @@ class CoreCtl
         }
         catch (NoCompressionException e)
         {
-            corePath = getCorePath(coreNum);
+            corePath = this.getCorePath(coreNum);
         }
 
-        const auto exePath = getExePath(coreNum);
+        const auto exePath = this.getExePath(coreNum);
         auto debuggerPid = spawnProcess(["gdb", exePath, corePath]);
 
         scope (exit)
@@ -199,10 +199,10 @@ class CoreCtl
         }
         catch (NoCompressionException e)
         {
-            corePath = getCorePath(coreNum);
+            corePath = this.getCorePath(coreNum);
         }
 
-        auto exePath = getExePath(coreNum);
+        auto exePath = this.getExePath(coreNum);
         immutable auto gdbArgs = [
             "-ex", "set width 0", "-ex", "set height 0", "-ex", "set verbose off",
             "-ex", "bt"
@@ -221,7 +221,7 @@ class CoreCtl
                 format("Coredump number %s doesn't exist!", coreNum + humansCountFromOne));
 
         writefln("Info about coredump: %d\n" ~ "Coredump path:       %s",
-                coreNum + humansCountFromOne, getCorePath(coreNum));
+                coreNum + humansCountFromOne, this.getCorePath(coreNum));
     }
 }
 
