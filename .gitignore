@@ -13,3 +13,6 @@ source/corectl/corectl
 source/corectl/corectl-test-application
 source/corehelper/corehelper
 source/corehelper/corehelper-test-application
+
+# tests generate these
+tmp*.o
