@@ -204,14 +204,30 @@ class CoreCtl
 
         auto exePath = this.getExePath(coreNum);
         immutable auto gdbArgs = [
-            "-ex", "set width 0", "-ex", "set height 0", "-ex", "set verbose off",
-            "-ex", "bt"
+            "--batch", "-ex", "set width 0", "-ex", "set height 0", "-ex",
+            "set verbose off", "-ex", "bt"
         ];
-        auto debuggerPid = spawnProcess(["gdb", "--batch"] ~ gdbArgs ~ [
-                exePath, corePath
-                ]);
-        scope (exit)
-            wait(debuggerPid);
+        auto gdb = execute(["gdb"] ~ gdbArgs ~ [exePath, corePath]);
+        if (gdb.status != 0)
+        {
+            errorf("Failed to get backtrace via gdb %s", gdb.output);
+        }
+        else
+        {
+            import std.regex : regex, replaceAll;
+
+            auto removeLWPRegex = regex(".*New LWP [0-9].*");
+            auto outputWithoutLWP = gdb.output.replaceAll(removeLWPRegex, "");
+            string output;
+            foreach (line; outputWithoutLWP.split('\n'))
+            {
+                if (line != "")
+                {
+                    output ~= line ~ "\n";
+                }
+            }
+            writeln(output);
+        }
     }
 
     /// Print information about coredump `coreNum`
