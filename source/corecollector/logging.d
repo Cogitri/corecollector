@@ -60,8 +60,8 @@ class SyslogLogger : FileLogger
         super.writeLogMsg(payload);
         if (this.logLevel != LogLevel.off)
         {
-            const auto escapedLogMsg = payload.msg.replace('%', "%%");
-            syslog(toSyslogLevel(payload.logLevel), escapedLogMsg.toStringz);
+            syslog(toSyslogLevel(payload.logLevel), "%.*s",
+                    cast(int) payload.msg.length, payload.msg.ptr);
         }
     }
 }
