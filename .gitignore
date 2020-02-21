@@ -16,3 +16,6 @@ source/corehelper/corehelper-test-application
 
 # tests generate these
 tmp*.o
+
+# Coverage data
+*.lst
