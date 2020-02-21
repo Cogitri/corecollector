@@ -167,11 +167,13 @@ class CoreCtl
         enforce!NoSuchCoredumpException(ensureCoredump(coreNum),
                 format("Coredump number %s doesn't exist!", coreNum + humansCountFromOne));
 
+        bool compressedCore = false;
         string corePath;
 
         try
         {
             corePath = this.decompressCore(coreNum);
+            compressedCore = true;
         }
         catch (NoCompressionException e)
         {
@@ -182,7 +184,13 @@ class CoreCtl
         auto debuggerPid = spawnProcess(["gdb", exePath, corePath]);
 
         scope (exit)
+        {
             wait(debuggerPid);
+            if (compressedCore)
+            {
+                remove(corePath);
+            }
+        }
     }
 
     /// Print the backtrace of the coredump `coreNum` to stdout
@@ -191,15 +199,25 @@ class CoreCtl
         enforce!NoSuchCoredumpException(ensureCoredump(coreNum),
                 format("Coredump number %s doesn't exist!", coreNum + humansCountFromOne));
 
+        bool compressedCore = false;
         string corePath;
 
         try
         {
             corePath = this.decompressCore(coreNum);
+            compressedCore = true;
         }
         catch (NoCompressionException e)
         {
             corePath = this.getCorePath(coreNum);
+        }
+
+        scope (exit)
+        {
+            if (compressedCore)
+            {
+                remove(corePath);
+            }
         }
 
         auto exePath = this.getExePath(coreNum);
