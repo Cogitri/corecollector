@@ -1,15 +1,17 @@
 corecollector.conf(5)
 
 # NAME
-corecollector.conf - configuration for corecollector, a coredump collector
+
+corecollector.conf - configuration for corecollector
 
 # DESCRIPTION
+
 The *corecollector.conf* file is used to configure corecollector. As of now it
-supports the following, not case sensitive, keys:
+supports the following, not case sensitive, keywords:
 
 *compression*
 	This sets what compression algorithm should be used for compression.
-	As of now none are supported.
+	Zlib is supported, while no compression is the default.
 
 *maxSize*
 	This sets the maximum size (in KByte) of a coredump. If the coredump
@@ -33,32 +35,38 @@ supports the following, not case sensitive, keys:
 	targetPath may grow to before corehelper starts deleting old coredumps.
 
 # FILES
-corecollector.conf	configuration for corecollector, a coredump collector
+
+_/etc/corecollector/corecollector.conf_++
+	Configuration for corecollector, a coredump collector.
 
 # EXAMPLES
-\# What compression to use for coredumps.
-\# Available choices:
-compression = none
-\# The maximum size of coredumps.
-\# Unset or set to 0 to set no size limit.
-\# Measured in KByte, must be whole numbers.
-maxSize = 0
-\# The path to save coredumps to.
-targetPath = /var/lib/corecollector
-\# Where to log to. Pass /dev/null to only log to syslog
-logPath = /var/log/corecollector.log
-\# Enable debugging
-enableDebug = false
-\# The maximum size of the coredumpdir.
-\# Unset or set to 0 to set no size limit.
-\# Measured in KByte, must be whole numbers.
+
+\# What compression to use for coredumps.++
+\# Available choices: none zlib++
+compression = none++
+\# The maximum size of coredumps.++
+\# Unset or set to 0 to set no size limit.++
+\# Measured in KByte, must be whole numbers.++
+maxSize = 0++
+\# The path to save coredumps to.++
+targetPath = /var/lib/corecollector++
+\# Where to log to. Pass /dev/null to only log to syslog++
+logPath = /var/log/corecollector.log++
+\# Enable debugging++
+enableDebug = false++
+\# The maximum size of the coredumpdir.++
+\# Unset or set to 0 to set no size limit.++
+\# Measured in KByte, must be whole numbers.++
 maxDirSize = 0
 
 # SEE ALSO
+
 *corectl*(1)
 
 # BUGS
+
 See bugs at https://github.com/Cogitri/corecollector
 
 # AUTHORS
+
 Rasmus Thomsen

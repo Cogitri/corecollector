@@ -5,6 +5,7 @@ corectl(1)
 corectl - User binary for interacting with corecollector
 
 # SYNOPSIS
+
 *corectl* [options...] [command]
 
 # DESCRIPTION
@@ -13,6 +14,7 @@ Corectl allows you to interact with previously collected coredumps, e.g.
 by showing additional information or opening the coredump in a debugger.
 
 # OPTIONS
+
 The corectl application accepts the following command line parameters:
 
 *-h, --help*
@@ -27,6 +29,7 @@ The corectl application accepts the following command line parameters:
 	trace log messages.
 
 # COMMANDS
+
 The corectl application also expects users to supply one of the following commands:
 
 *backtrace* [ID]
@@ -46,10 +49,13 @@ The corectl application also expects users to supply one of the following comman
 	List all available coredumps.
 
 # SEE ALSO
+
 *corecollector.conf*(5)
 
 # BUGS
+
 See bugs at https://github.com/Cogitri/corecollector
 
 # AUTHOR
+
 Rasmus Thomsen
