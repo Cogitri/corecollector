@@ -18,13 +18,11 @@ core_lib = library(
     soversion: project_soversion,
     d_module_versions: d_mod_version,
     include_directories: src_inc,
-    link_args: ['-shared', link_runtime_shared_arg],
 )
 
 core_lib_dep = declare_dependency(
     link_with: core_lib,
     include_directories: src_inc,
-    link_args: link_runtime_shared_arg,
 )
 
 pkgc.generate(
@@ -40,14 +38,12 @@ core_lib_test_lib = library(
     include_directories: src_inc,
     d_args: '-J' + join_paths(meson.current_source_dir(), 'views'),
     d_module_versions: ['unittest_manual'],
-    link_args: [link_runtime_shared_arg],
     native: true,
 )
 
 core_lib_test_lib_dep = declare_dependency(
     link_with: core_lib_test_lib,
     include_directories: src_inc,
-    link_args: link_runtime_shared_arg,
 )
 
 install_headers(
