@@ -28,8 +28,13 @@ jobs:
       - name: Install meson
         run: pip3 install meson
 
-      - name: Test meson build
+      - name: Test meson with DMD
         run: meson build && meson test --verbose -C build
+        if: ${{ matrix.dc == 'dmd-latest' }}
+
+      - name: Test meson with LDC
+        run: DFLAGS="-link-defaultlib-shared" meson build && meson test --verbose -C build
+        if: ${{ matrix.dc == 'ldc-latest' }}
 
       - name: Run dub tests
         run: |
