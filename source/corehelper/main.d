@@ -56,11 +56,11 @@ int main(string[] args)
 
     if (conf.debugEnabled)
     {
-        setupLogging(LogLevel.warning, File(conf.logPath, "w"));
+        setupLogging(LogLevel.trace, File(conf.logPath, "w"));
     }
     else
     {
-        setupLogging(LogLevel.trace, File(conf.logPath, "w"));
+        setupLogging(LogLevel.warning, File(conf.logPath, "w"));
     }
 
     const auto options = new Options(args);
