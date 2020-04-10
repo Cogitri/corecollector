@@ -70,8 +70,15 @@ class Options
 
     this(string[] args) @safe
     {
-        getopt(args, "help|h", &this.showHelp, "version|v", &this.showVersion,
-                std.getopt.config.required, "e|exe-name", &this.exe,
+        getopt(args, std.getopt.config.passThrough, "h|help", &this.showHelp,
+                "v|version", &this.showVersion);
+
+        if (this.showVersion || this.showHelp)
+        {
+            return;
+        }
+
+        getopt(args, std.getopt.config.required, "e|exe-name", &this.exe,
                 std.getopt.config.required, "x|exe-path", &this.exePath,
                 std.getopt.config.required, "p|pid", &this.pid,
                 std.getopt.config.required, "u|uid", &this.uid,
@@ -110,4 +117,18 @@ unittest
             .toLocalTime(), "testExe", "/usr/bin/testExe", Compression.Zlib);
     assert(expectedVal.toString() == generatedCoredump.toString(),
             format("Expected %s, got %s", expectedVal, generatedCoredump));
+}
+
+unittest
+{
+    auto args = array(["thisExe", "-h"]);
+    auto options = new Options(args);
+    assert(options.showHelp);
+}
+
+unittest
+{
+    auto args = array(["thisExe", "-v"]);
+    auto options = new Options(args);
+    assert(options.showVersion);
 }
