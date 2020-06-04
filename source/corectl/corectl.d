@@ -103,7 +103,7 @@ class CoreCtl
     }
 
     /// Decompresses the coredump to a temporary directory. Returns the
-    /// path to the coredump
+    /// path to the coredump. Make sure to delete when done with it.
     string decompressCore(in uint coreNum) const
     {
         auto coredump = coredumpDir.coredumps[coreNum];
@@ -117,7 +117,7 @@ class CoreCtl
     }
 
     /// Decompresses the coredump to a set `File`. The `File` must be in
-    /// writeable
+    /// writeable. Make sure to delete when done with it.
     void decompressCore(in uint coreNum, File targetFile) const
     {
         auto coredump = coredumpDir.coredumps[coreNum];
@@ -158,6 +158,7 @@ class CoreCtl
             {
                 targetFile.rawWrite(buffer);
             }
+            targetFile.flush();
         }
     }
 

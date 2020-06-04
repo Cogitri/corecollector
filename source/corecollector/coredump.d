@@ -187,6 +187,7 @@ class Coredump
                 decompressedFile.rawWrite(chunk);
             }
             decompressedFile.rawWrite(decmp.flush());
+            decompressedFile.flush();
             break;
         default:
             throw new NoCompressionException(format("Can't decompress core with compression '%s'",
@@ -360,6 +361,7 @@ class CoredumpDir
             {
                 target.rawWrite(buffer);
             }
+            target.flush();
             break;
         case Zlib:
             auto cmp = new Compress;
@@ -369,6 +371,7 @@ class CoredumpDir
             }
             //Write remaining data
             target.rawWrite(cmp.flush());
+            target.flush();
             break;
         }
     }
@@ -752,6 +755,7 @@ unittest
     const auto expectedVal = "ThisIsGoingToBeCompressed!";
     auto coredumpFileDet = File(dummyDumpPath, "w");
     coredumpFileDet.rawWrite(expectedVal);
+    coredumpFileDet.flush();
     coredumpFileDet.close();
     // Setup stdin so this can we can read from it in addCoredump()
     stdin.reopen(dummyDumpPath, "r");
