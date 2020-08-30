@@ -1,5 +1,5 @@
 globals_d = configure_file(
-    input: 'globals.d',
+    input: 'globals.d.in',
     output: 'globals.d',
     configuration: conf,
 )
