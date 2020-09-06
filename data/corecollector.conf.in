@@ -14,4 +14,4 @@ enableDebug = false
 # The maximum size of the coredumpdir.
 # Unset or set to 0 to set no size limit.
 # Measured in KByte, must be whole numbers.
-maxDirSize = 0
+maxDirSize = 500000
